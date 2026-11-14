@@ -54,8 +54,16 @@
       <small id="historyMessage">يُحفظ السجل على هذا الجهاز فقط.</small>
     </div>
   </section>
+  <section class="decoder-panel" aria-labelledby="decoderTitle">
+    <div class="decoder-heading"><span class="decoder-chip">BETA</span><div><h2 id="decoderTitle">CRASH DECODER</h2><p>محلل رسائل SignalR — قراءة وفهم ما وصل من اللعبة</p></div></div>
+    <label for="decoderInput">الصق رسائل WebSocket / SignalR التي سجلتها بنفسك</label>
+    <textarea id="decoderInput" placeholder='{"type":1,"target":"OnCrash","arguments":[{"l":50282240,"f":3.68}]}&#10;افصل الرسائل بسطر جديد أو بعلامة SignalR المنقولة'></textarea>
+    <div class="decoder-actions"><button id="decodeMessages" class="launch">فك وتحليل الرسائل</button><button id="clearDecoder" type="button">مسح</button></div>
+    <p id="decoderStatus" class="decoder-status" aria-live="polite">لا يتم الاتصال بحسابك أو بموقع اللعبة. الصق البيانات المسجلة لتحليلها محليًا.</p>
+    <div id="decoderResults" class="decoder-results" aria-live="polite"></div>
+  </section>
 </main>
 <footer><span class="crown">♛</span><strong>Eng Amir Salama</strong><small>DEVELOPER</small></footer>
 <div class="disclaimer">مؤشر تجريبي إحصائي وليس توقعًا مؤكدًا. نتائج Crash لا يمكن ضمانها.</div>
-<script src="analytics.js"></script><script src="app.js"></script>
+<script src="analytics.js"></script><script src="decoder.js"></script><script src="app.js"></script>
 </body></html>
