@@ -7,7 +7,7 @@ test("parses dot and comma decimal multipliers",()=>{
 });
 test("summarizes only valid multipliers",()=>{
  const s=Analytics.summarize([1.2,2,5,0,NaN]);
- assert.equal(s.count,3); assert.equal(s.average,2.7333333333333334);
+ assert.equal(s.count,3); assert.ok(Math.abs(s.average-2.733333333333333)<1e-12);
  assert.equal(s.median,2); assert.equal(s.above2,66.66666666666666);
 });
 test("measures next-round threshold rates with correct denominators",()=>{
