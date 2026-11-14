@@ -23,12 +23,12 @@ $("nextRound").addEventListener("click",()=>{
    if(!report.total){status.textContent="لم أتعرف على رسائل SignalR صحيحة. تأكد من نسخ الرسالة كاملة.";return;}
    status.textContent="تم تحليل "+report.total+" رسالة؛ رسائل غير مفهومة: "+report.ignored+".";
    const summary=document.createElement("div");summary.className="decoder-summary";
-   summary.textContent="بداية جولات: "+report.counts.starts+" · نتائج Crash: "+report.counts.crashes+" · Cashouts: "+report.counts.cashouts+" · Profits: "+report.counts.profits+" · جولات مكتملة بمعرّف: "+report.completed.length;
+   summary.textContent="بداية جولات: "+report.counts.starts+" · OnCrash: "+report.counts.crashes+" · OnResult: "+report.counts.results+" · Cashouts: "+report.counts.cashouts+" · Profits: "+report.counts.profits+" · نتائج مجمعة: "+report.completed.length;
    decoderResults.appendChild(summary);
-   const heading=document.createElement("h3");heading.textContent="النتائج التي وصلت بالفعل من OnCrash";decoderResults.appendChild(heading);
+   const heading=document.createElement("h3");heading.textContent="النتائج النهائية المستلمة من OnCrash / OnResult";decoderResults.appendChild(heading);
    const list=document.createElement("ol");list.className="decoder-list";
-   report.completed.slice(-20).reverse().forEach(round=>{const item=document.createElement("li");item.textContent="الجولة "+round.roundId+" — "+round.crash.toFixed(2)+"x";list.appendChild(item);});
-   if(!report.completed.length){const item=document.createElement("li");item.textContent="لم يتم العثور على OnCrash يحتوي على معرّف جولة ومضاعف نهائي.";list.appendChild(item);}
+   report.completed.slice(-20).reverse().forEach(round=>{const item=document.createElement("li");item.textContent="الجولة "+round.roundId+" — "+round.finalMultiplier.toFixed(2)+"x ("+round.sources.join(" + ")+")"+(round.mismatch?" — اختلاف بين المصدرين":"");list.appendChild(item);});
+   if(!report.completed.length){const item=document.createElement("li");item.textContent="لم يتم العثور على OnCrash أو OnResult يحتوي على معرّف جولة ومضاعف نهائي.";list.appendChild(item);}
    decoderResults.appendChild(list);
    const note=document.createElement("p");note.className="decoder-note";
    note.textContent="ملاحظة: OnCrash نتيجة بعد انتهاء الجولة، وليست إشارة مسبقة. هذا المحلل لا يستخرج أسرار الخادم ولا يتصل بحساب 1xBet.";
