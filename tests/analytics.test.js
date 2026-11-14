@@ -13,8 +13,8 @@ test("summarizes only valid multipliers",()=>{
 test("measures next-round threshold rates with correct denominators",()=>{
  const result=Analytics.analyzeTransitions([1.2,2.5,1.1,1.7,3.2,4.1],2);
  assert.equal(result.pairs,5);
- assert.deepEqual(result.afterBelow,{previousCount:2,nextAtOrAbove:1,rate:50});
- assert.deepEqual(result.afterAtOrAbove,{previousCount:3,nextAtOrAbove:2,rate:66.66666666666666});
+ assert.deepEqual(result.afterBelow,{previousCount:3,nextAtOrAbove:2,rate:66.66666666666666});
+ assert.deepEqual(result.afterAtOrAbove,{previousCount:2,nextAtOrAbove:1,rate:50});
  assert.equal(result.overallRate,60);
 });
 test("returns null rates when there are no eligible transitions",()=>{
