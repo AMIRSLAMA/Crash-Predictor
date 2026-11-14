@@ -1,0 +1,7 @@
+{
+  "name": "crash-predictor",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Arabic historical Crash multiplier analytics",
+  "scripts": { "test": "node --test" }
+}
