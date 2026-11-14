@@ -27,7 +27,30 @@
     const total = values.length || 1;
     return ranges.map(r => ({label:r.label,count:values.filter(r.test).length,percent:values.filter(r.test).length/total*100}));
   }
-  const api = { parseMultipliers, median, summarize, buckets };
+  function analyzeTransitions(values, threshold = 2) {
+    const a = values.filter(v => Number.isFinite(v) && v >= 1);
+    const groups = {
+      afterBelow: { previousCount: 0, nextAtOrAbove: 0 },
+      afterAtOrAbove: { previousCount: 0, nextAtOrAbove: 0 }
+    };
+    let total = 0, nextAtOrAbove = 0;
+    for (let i = 0; i < a.length - 1; i++) {
+      const previousHigh = a[i] >= threshold;
+      const nextHigh = a[i + 1] >= threshold;
+      const group = previousHigh ? groups.afterAtOrAbove : groups.afterBelow;
+      group.previousCount++;
+      if (nextHigh) group.nextAtOrAbove++;
+      total++;
+      if (nextHigh) nextAtOrAbove++;
+    }
+    const rate = group => group.previousCount ? group.nextAtOrAbove / group.previousCount * 100 : null;
+    return {
+      threshold, pairs: total, overallRate: total ? nextAtOrAbove / total * 100 : null,
+      afterBelow: { ...groups.afterBelow, rate: rate(groups.afterBelow) },
+      afterAtOrAbove: { ...groups.afterAtOrAbove, rate: rate(groups.afterAtOrAbove) }
+    };
+  }
+  const api = { parseMultipliers, median, summarize, buckets, analyzeTransitions };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   root.CrashAnalytics = api;
 })(typeof window !== "undefined" ? window : globalThis);
