@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#090b10"><title>Crash Predictor | تحليل Crash</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar"><a class="brand" href="#"><span class="logo">CP</span><span>CRASH <b>PREDICTOR</b><small>تحليل السجل والإحصائيات</small></span></a><span class="tag"><i></i> نسخة تجريبية · MVP</span></header>
+  <main>
+    <section class="hero"><div class="eyebrow">HISTORICAL ANALYTICS</div><h1>افهم السجل… <em>من غير وعود وهمية</em></h1><p>أدخل نتائج الجولات السابقة لتحصل على إحصائيات وتوزيع واضح للمضاعفات.</p></section>
+    <section class="panel input-panel"><div class="section-head"><div><h2>سجل المضاعفات</h2><p>الصق الأرقام بالترتيب — كل رقم يفصل بمسافة أو فاصلة أو سطر.</p></div><span class="step">01 / INPUT</span></div>
+      <textarea id="historyInput" placeholder="مثال: 1.20&#10;2.45&#10;1.08&#10;7.30&#10;3.10" spellcheck="false"></textarea>
+      <div class="actions"><button id="analyzeBtn" class="primary">✦ حلّل السجل</button><button id="sampleBtn" class="secondary">تحميل مثال</button><button id="clearBtn" class="ghost">مسح</button></div>
+    </section>
+    <section id="results" class="hidden">
+      <div class="section-head result-head"><div><h2>ملخص التحليل</h2><p>نتائج حسابية من البيانات التي أدخلتها فقط.</p></div><span class="step">02 / ANALYSIS</span></div>
+      <div id="stats" class="stats"></div>
+      <div class="grid-two"><section class="panel"><div class="section-head"><div><h2>توزيع المضاعفات</h2><p>نسبة كل نطاق داخل السجل.</p></div></div><div id="distribution"></div></section>
+      <section class="panel"><div class="section-head"><div><h2>قراءة آخر الجولات</h2><p>آخر 20 نتيجة — الأحدث أولًا.</p></div></div><div id="latest" class="latest"></div><div class="risk"><span class="risk-dot"></span><div><b>ملاحظة إحصائية</b><p id="riskText"></p></div></div></section></div>
+    </section>
+    <section class="notice"><span>!</span><p><b>مهم:</b> Crash لعبة عالية المخاطر. الإحصائيات السابقة لا تكشف نتيجة الجولة القادمة، ولا يوجد ضمان ربح أو دقة 70%. لا تراهن بأموال لا تتحمل خسارتها.</p></section>
+    <footer>CRASH PREDICTOR <span>·</span> تحليل محلي — لا يتم إرسال سجلك إلى خادم</footer>
+  </main>
+  <script src="analytics.js"></script><script src="app.js"></script>
+</body></html>
