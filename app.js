@@ -6,6 +6,16 @@ function loadCollected(){try{const data=JSON.parse(localStorage.getItem(STORAGE_
 function saveCollected(rounds){localStorage.setItem(STORAGE_KEY,JSON.stringify(rounds));renderCollected();}
 function renderCollected(){
  const rounds=loadCollected(),count=$("collectorCount"),list=$("collectorSaved");
+ const values=rounds.map(r=>Number(r.finalMultiplier)).filter(v=>Number.isFinite(v)&&v>=1);
+ if(values.length){
+  $("multiplier").innerHTML=CrashAnalytics.median(values).toFixed(2)+'<small>x</small>';
+  $("status").textContent="الوسيط المحسوب تلقائيًا من "+values.length+" جولة محفوظة — ليس توقعًا للجولة القادمة";
+  $("subnote").textContent="تتغير هذه القيمة عند إضافة نتائج جديدة إلى الجامع. هي ملخص للنتائج السابقة فقط وليست إشارة للمراهنة.";
+ }else{
+  $("multiplier").innerHTML='--<small>x</small>';
+  $("status").textContent="لم تُجمع نتائج بعد؛ أضف رسائل OnCrash أو OnResult";
+  $("subnote").textContent="سيظهر هنا الوسيط التاريخي تلقائيًا بعد جمع النتائج. لا توجد قيمة توقع موثوقة للجولة القادمة.";
+ }
  count.textContent="الجولات المحفوظة: "+rounds.length;list.replaceChildren();
  const title=document.createElement("h3");title.textContent="آخر 10 جولات محفوظة";list.appendChild(title);
  const recent=rounds.slice(-10).reverse();
