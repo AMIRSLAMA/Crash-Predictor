@@ -19,8 +19,10 @@ python -m http.server 8000
 
 ## CRASH DECODER
 - الصق رسائل SignalR التي سجلتها بنفسك في قسم CRASH DECODER.
-- يتعرف على `OnStart` و`OnCrash` و`OnRegistration` و`OnCashouts` و`OnProfits`.
-- يربط `OnCrash.f` بمعرّف الجولة `l` عند توفرهما.
+- يتعرف على `OnStart` و`OnCrash` و`OnResult` و`OnRegistration` و`OnCashouts` و`OnProfits`.
+- يربط `OnCrash.f` و`OnResult.f` بمعرّف الجولة `l` عند توفره.
+- يقارن قيمة الانهيار بين `OnCrash` و`OnResult` ويعلّم أي اختلاف بدل إخفائه.
+- يعرض `OnResult.k` كقيمة منفصلة، ولا يخلطها مع مضاعف الانهيار.
 - التحليل محلي داخل المتصفح؛ لا يوجد اتصال تلقائي بموقع 1xBet أو بحساب المستخدم.
 - رسائل `OnCashouts` و`OnProfits` ليست نتيجة Crash ولا تُعامل على أنها مضاعف الجولة.
 - لا يمكن استنتاج نتيجة الجولة القادمة من نتيجة `OnCrash` السابقة. دعم التحقق Provably Fair يحتاج بيانات البذور/الـ nonce الفعلية وآلية المزود.
