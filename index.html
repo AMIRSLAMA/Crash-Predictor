@@ -7,63 +7,42 @@
 </head>
 <body>
 <header class="topbar">
-  <a class="brand" href="#" aria-label="Crash Predictor"><span class="brand-mark">CP</span><span>CRASH <b>PREDICTOR</b><small>RAF ALE EDITION</small></span></a>
+  <a class="brand" href="#" aria-label="Crash Predictor"><span class="brand-mark">CP</span><span>CRASH <b>PREDICTOR</b><small>RAFALE EDITION</small></span></a>
   <span class="online"><i></i> SYSTEM ONLINE</span>
 </header>
 <main class="stage">
   <div class="flight-grid"></div>
   <div class="eyebrow">NEXT ROUND ANALYSIS <span>•</span> EXPERIMENTAL</div>
   <section class="flight" aria-label="Rafale fighter aircraft">
-    <div class="radar radar-one"></div><div class="radar radar-two"></div>
-    <div class="flight-trail"></div>
+    <div class="radar radar-one"></div><div class="radar radar-two"></div><div class="flight-trail"></div>
     <svg class="rafale" viewBox="0 0 680 300" role="img" aria-label="رسمة مقاتلة رافال">
-      <defs>
-        <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f5f7fb"/><stop offset=".28" stop-color="#8795a8"/><stop offset=".55" stop-color="#303b4b"/><stop offset=".78" stop-color="#aab5c2"/><stop offset="1" stop-color="#252d3b"/></linearGradient>
-        <linearGradient id="wing" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#cbd3dc"/><stop offset="1" stop-color="#303a49"/></linearGradient>
-        <filter id="glow"><feGaussianBlur stdDeviation="8"/></filter>
-      </defs>
-      <path d="M80 240 Q270 130 520 20" stroke="#ff4b2b" stroke-width="15" opacity=".5" filter="url(#glow)" fill="none"/>
-      <path d="M95 248 Q280 135 520 22" stroke="#ff5c36" stroke-width="4" opacity=".9" fill="none"/>
-      <g transform="translate(4 0) rotate(-15 350 145)">
-        <path d="M330 12 L354 12 L379 106 L565 190 L560 210 L380 178 L366 260 L350 282 L334 260 L320 178 L140 210 L135 190 L321 106Z" fill="url(#wing)" stroke="#d5dce5" stroke-width="2"/>
-        <path d="M337 24 L350 0 L363 24 L372 142 L350 232 L328 142Z" fill="url(#metal)" stroke="#eef2f7" stroke-width="2"/>
-        <path d="M333 80 Q350 53 367 80 L360 125 L350 143 L340 125Z" fill="#192333" stroke="#aeb9c8" stroke-width="3"/>
-        <path d="M339 84 Q350 70 361 84 L356 108 L350 115 L344 108Z" fill="#78a3c6" opacity=".7"/>
-        <path d="M321 148 L270 185 L280 198 L337 175 M379 148 L430 185 L420 198 L363 175" fill="#536173" stroke="#bac4d0" stroke-width="2"/>
-        <path d="M350 15 L350 268" stroke="#f4f6f9" stroke-width="2" opacity=".6"/>
-        <path d="M335 178 L350 230 L365 178" fill="#202a38"/>
-        <path d="M323 166 L260 193 M377 166 L440 193" stroke="#e9eef5" stroke-width="2" opacity=".5"/>
-        <circle cx="350" cy="249" r="7" fill="#ff5b32"/>
-      </g>
+      <defs><linearGradient id="metal" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f5f7fb"/><stop offset=".28" stop-color="#8795a8"/><stop offset=".55" stop-color="#303b4b"/><stop offset=".78" stop-color="#aab5c2"/><stop offset="1" stop-color="#252d3b"/></linearGradient><linearGradient id="wing" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#cbd3dc"/><stop offset="1" stop-color="#303a49"/></linearGradient><filter id="glow"><feGaussianBlur stdDeviation="8"/></filter></defs>
+      <path d="M80 240 Q270 130 520 20" stroke="#ff4b2b" stroke-width="15" opacity=".5" filter="url(#glow)" fill="none"/><path d="M95 248 Q280 135 520 22" stroke="#ff5c36" stroke-width="4" opacity=".9" fill="none"/>
+      <g transform="translate(4 0) rotate(-15 350 145)"><path d="M330 12 L354 12 L379 106 L565 190 L560 210 L380 178 L366 260 L350 282 L334 260 L320 178 L140 210 L135 190 L321 106Z" fill="url(#wing)" stroke="#d5dce5" stroke-width="2"/><path d="M337 24 L350 0 L363 24 L372 142 L350 232 L328 142Z" fill="url(#metal)" stroke="#eef2f7" stroke-width="2"/><path d="M333 80 Q350 53 367 80 L360 125 L350 143 L340 125Z" fill="#192333" stroke="#aeb9c8" stroke-width="3"/><path d="M339 84 Q350 70 361 84 L356 108 L350 115 L344 108Z" fill="#78a3c6" opacity=".7"/><path d="M321 148 L270 185 L280 198 L337 175 M379 148 L430 185 L420 198 L363 175" fill="#536173" stroke="#bac4d0" stroke-width="2"/><path d="M350 15 L350 268" stroke="#f4f6f9" stroke-width="2" opacity=".6"/><path d="M335 178 L350 230 L365 178" fill="#202a38"/><path d="M323 166 L260 193 M377 166 L440 193" stroke="#e9eef5" stroke-width="2" opacity=".5"/><circle cx="350" cy="249" r="7" fill="#ff5b32"/></g>
     </svg>
     <div class="plane-label"><b>RAFALE</b><span>DASSAULT · MULTIROLE FIGHTER</span></div>
   </section>
   <section class="prediction">
-    <div class="prediction-label">الوسيط التاريخي للسجل</div>
-    <div class="multiplier" id="multiplier">--<small>x</small></div>
-    <div class="status" id="status">أدخل سجل النتائج لبدء التحليل</div>
-    <button id="nextRound" class="launch"><span>✦</span> حلّل السجل التاريخي</button>
+    <div class="prediction-label">الوسيط التاريخي للسجل</div><div class="multiplier" id="multiplier">--<small>x</small></div>
+    <div class="status" id="status">أدخل سجل النتائج لبدء التحليل</div><button id="nextRound" class="launch"><span>✦</span> حلّل السجل التاريخي</button>
     <p class="subnote" id="subnote">يعرض ملخصًا إحصائيًا للنتائج السابقة فقط، ولا يتنبأ بنتيجة الجولة القادمة</p>
   </section>
   <section class="history-drawer">
     <button id="toggleHistory" class="history-toggle" aria-expanded="false">＋ إدخال سجل النتائج السابقة</button>
-    <div id="historyPanel" class="history-panel hidden">
-      <label for="historyInput">الصق المضاعفات السابقة — مفصولة بمسافة أو فاصلة أو سطر</label>
-      <textarea id="historyInput" placeholder="1.12, 1.45, 2.08, 1.01, 3.62"></textarea>
-      <div class="history-actions"><button id="saveHistory">حفظ السجل</button><button id="sampleHistory">مثال للتجربة</button></div>
-      <small id="historyMessage">يُحفظ السجل على هذا الجهاز فقط.</small>
-    </div>
+    <div id="historyPanel" class="history-panel hidden"><label for="historyInput">الصق المضاعفات السابقة — مفصولة بمسافة أو فاصلة أو سطر</label><textarea id="historyInput" placeholder="1.12, 1.45, 2.08, 1.01, 3.62"></textarea><div class="history-actions"><button id="saveHistory">حفظ السجل</button><button id="sampleHistory">مثال للتجربة</button></div><small id="historyMessage">يُحفظ السجل على هذا الجهاز فقط.</small></div>
   </section>
   <section class="decoder-panel" aria-labelledby="decoderTitle">
-    <div class="decoder-heading"><span class="decoder-chip">BETA</span><div><h2 id="decoderTitle">CRASH DECODER</h2><p>محلل رسائل SignalR — قراءة وفهم ما وصل من اللعبة</p></div></div>
-    <label for="decoderInput">الصق رسائل WebSocket / SignalR التي سجلتها بنفسك</label>
-    <textarea id="decoderInput" placeholder='{"type":1,"target":"OnCrash","arguments":[{"l":50282240,"f":3.68}]}&#10;افصل الرسائل بسطر جديد أو بعلامة SignalR المنقولة'></textarea>
-    <div class="decoder-actions"><button id="decodeMessages" class="launch">فك وتحليل الرسائل</button><button id="clearDecoder" type="button">مسح</button></div>
-    <p id="decoderStatus" class="decoder-status" aria-live="polite">لا يتم الاتصال بحسابك أو بموقع اللعبة. الصق البيانات المسجلة لتحليلها محليًا.</p>
+    <div class="decoder-heading"><span class="decoder-chip">AUTO SAVE</span><div><h2 id="decoderTitle">جامع النتائج · CRASH COLLECTOR</h2><p>الصق رسائل النتائج هنا؛ نجمع الجولات ونحفظها على جهازك</p></div></div>
+    <label for="decoderInput">رسائل SignalR التي نسختها من Network (OnCrash / OnResult)</label>
+    <textarea id="decoderInput" placeholder='الصق الرسائل هنا كما هي، كل رسالة في سطر أو بعلامة الفصل الأصلية&#10;{"type":1,"target":"OnCrash","arguments":[{"l":50282240,"f":3.68,"ts":1794356536675}]}'></textarea>
+    <div class="decoder-actions"><button id="decodeMessages" class="launch">حلّل واجمع النتائج</button><button id="clearDecoder" type="button">مسح المربع</button></div>
+    <p id="decoderStatus" class="decoder-status" aria-live="polite">الحفظ محلي على هذا الجهاز فقط. لا يوجد اتصال تلقائي باللعبة أو بحسابك.</p>
+    <div class="collector-toolbar"><strong id="collectorCount">الجولات المحفوظة: 0</strong><div><button id="exportJson" type="button">تصدير JSON</button><button id="exportCsv" type="button">تصدير CSV</button><button id="clearCollected" type="button">مسح السجل المحفوظ</button></div></div>
     <div id="decoderResults" class="decoder-results" aria-live="polite"></div>
+    <div id="collectorSaved" class="collector-saved"></div>
   </section>
 </main>
 <footer><span class="crown">♛</span><strong>Eng Amir Salama</strong><small>DEVELOPER</small></footer>
 <div class="disclaimer">مؤشر تجريبي إحصائي وليس توقعًا مؤكدًا. نتائج Crash لا يمكن ضمانها.</div>
-<script src="analytics.js"></script><script src="decoder.js"></script><script src="app.js"></script>
+<script src="analytics.js"></script><script src="decoder.js"></script><script src="collector.js"></script><script src="app.js"></script>
 </body></html>
