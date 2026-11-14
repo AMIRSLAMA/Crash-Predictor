@@ -15,7 +15,7 @@ test("parses OnResult and reconciles it with OnCrash regardless of event order",
  const raw=frame("OnResult",{l:55,f:2.75,k:1.8,t:123})+RS+frame("OnCrash",{l:55,f:2.75,ts:200})+RS;
  const report=Decoder.analyze(raw),round=report.completed[0];
  assert.equal(report.counts.results,1); assert.equal(round.finalMultiplier,2.75);
- assert.equal(round.resultCrash,2.75); assert.equal(round.resultUser,1.8);
+ assert.equal(round.resultCrash,2.75); assert.equal(round.resultUser,1.8); assert.equal(report.events[0].timestamp,123);
  assert.equal(round.mismatch,false); assert.deepEqual(round.sources,["OnCrash","OnResult"]);
 });
 test("keeps an OnResult-only round and exposes disagreement",()=>{
