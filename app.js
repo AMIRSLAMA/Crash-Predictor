@@ -15,4 +15,25 @@ $("nextRound").addEventListener("click",()=>{
  btn.disabled=true;btn.innerHTML="✓ تم تحليل السجل";
  setTimeout(()=>{btn.disabled=false;btn.innerHTML="<span>✦</span> حلّل السجل التاريخي";},1200);
 });
+
+ const decodeButton=$("decodeMessages"), decoderInput=$("decoderInput"), decoderResults=$("decoderResults");
+ decodeButton.addEventListener("click",()=>{
+   const report=CrashDecoder.analyze(decoderInput.value),status=$("decoderStatus");
+   decoderResults.replaceChildren();
+   if(!report.total){status.textContent="لم أتعرف على رسائل SignalR صحيحة. تأكد من نسخ الرسالة كاملة.";return;}
+   status.textContent="تم تحليل "+report.total+" رسالة؛ رسائل غير مفهومة: "+report.ignored+".";
+   const summary=document.createElement("div");summary.className="decoder-summary";
+   summary.textContent="بداية جولات: "+report.counts.starts+" · نتائج Crash: "+report.counts.crashes+" · Cashouts: "+report.counts.cashouts+" · Profits: "+report.counts.profits+" · جولات مكتملة بمعرّف: "+report.completed.length;
+   decoderResults.appendChild(summary);
+   const heading=document.createElement("h3");heading.textContent="النتائج التي وصلت بالفعل من OnCrash";decoderResults.appendChild(heading);
+   const list=document.createElement("ol");list.className="decoder-list";
+   report.completed.slice(-20).reverse().forEach(round=>{const item=document.createElement("li");item.textContent="الجولة "+round.roundId+" — "+round.crash.toFixed(2)+"x";list.appendChild(item);});
+   if(!report.completed.length){const item=document.createElement("li");item.textContent="لم يتم العثور على OnCrash يحتوي على معرّف جولة ومضاعف نهائي.";list.appendChild(item);}
+   decoderResults.appendChild(list);
+   const note=document.createElement("p");note.className="decoder-note";
+   note.textContent="ملاحظة: OnCrash نتيجة بعد انتهاء الجولة، وليست إشارة مسبقة. هذا المحلل لا يستخرج أسرار الخادم ولا يتصل بحساب 1xBet.";
+   decoderResults.appendChild(note);
+ });
+ $("clearDecoder").addEventListener("click",()=>{decoderInput.value="";decoderResults.replaceChildren();$("decoderStatus").textContent="تم مسح مساحة التحليل.";});
+
 })();
