@@ -11,7 +11,10 @@ $("nextRound").addEventListener("click",()=>{
  const recent=values.slice(-30),stats=CrashAnalytics.summarize(recent);
  number.innerHTML=stats.median.toFixed(2)+'<small>x</small>';
  status.textContent="الوسيط التاريخي للنتائج المدخلة — وليس توقعًا للجولة القادمة";
- note.textContent="عدد الجولات: "+stats.count+" · المتوسط: "+stats.average.toFixed(2)+"x · نتائج 2x فأكثر: "+stats.above2.toFixed(1)+"% · نتائج 5x فأكثر: "+stats.above5.toFixed(1)+"%.";
+ const transitions=CrashAnalytics.analyzeTransitions(recent,2);
+ const afterLow=transitions.afterBelow.rate===null?"غير كافٍ":transitions.afterBelow.rate.toFixed(1)+"% ("+transitions.afterBelow.nextAtOrAbove+"/"+transitions.afterBelow.previousCount+")";
+ const afterHigh=transitions.afterAtOrAbove.rate===null?"غير كافٍ":transitions.afterAtOrAbove.rate.toFixed(1)+"% ("+transitions.afterAtOrAbove.nextAtOrAbove+"/"+transitions.afterAtOrAbove.previousCount+")";
+ note.textContent="عدد الجولات: "+stats.count+" · المتوسط: "+stats.average.toFixed(2)+"x · نتائج 2x فأكثر: "+stats.above2.toFixed(1)+"% · نتائج 5x فأكثر: "+stats.above5.toFixed(1)+"%. الانتقال التاريخي للجولة التالية إلى 2x+: بعد أقل من 2x: "+afterLow+"؛ بعد 2x أو أكثر: "+afterHigh+"؛ إجمالي أزواج المقارنة: "+transitions.pairs+". هذا وصف تاريخي وليس توقعًا.";
  btn.disabled=true;btn.innerHTML="✓ تم تحليل السجل";
  setTimeout(()=>{btn.disabled=false;btn.innerHTML="<span>✦</span> حلّل السجل التاريخي";},1200);
 });
