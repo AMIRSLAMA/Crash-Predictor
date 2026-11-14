@@ -27,7 +27,7 @@
     const args=Array.isArray(message.arguments)?message.arguments:[];
     const data=args[0]&&typeof args[0]==="object"?args[0]:{};
     const roundId=data.l??data.roundId??data.round_id??null;
-    const event={index,type:message.type,target:message.target||"SignalR",roundId:roundId===null?null:String(roundId),timestamp:data.ts??null,fields:Object.keys(data)};
+    const event={index,type:message.type,target:message.target||"SignalR",roundId:roundId===null?null:String(roundId),timestamp:data.ts??data.t??null,fields:Object.keys(data)};
     if(target==="oncrash"){
       const multiplier=finiteMultiplier(data.f??data.multiplier??data.crash);
       if(multiplier!==null) event.multiplier=multiplier;
