@@ -4,7 +4,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#08090d"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
 <title>Crash Predictor | RAFALE EDITION</title>
-<link rel="stylesheet" href="styles.css?v=20261116-11">
+<link rel="stylesheet" href="styles.css?v=20261116-12">
 <style>
 /* Rafale edition: aircraft restored, prediction and action grouped in a single ring. */
 .topbar,.eyebrow,.flight,.prediction-label,.status,#autoThreshold,.subnote,footer,.disclaimer{display:flex!important}.eyebrow,.prediction-label,.status,#autoThreshold,.subnote,.disclaimer{display:block!important}.flight{display:flex!important}
@@ -45,9 +45,9 @@ body{min-height:100svh;overflow-x:hidden}
  #recentRoundsList li strong{font-size:16px;color:#f5d27e;font-variant-numeric:tabular-nums}
  #recentRoundsList li span{font-size:9px;color:#aeb4c0;overflow-wrap:anywhere}
  #liveRoundsCount{margin-top:10px}
- #comparisonPanel{margin-top:14px;padding-top:12px;border-top:1px solid #ffffff18;text-align:right}
- #comparisonPanel h3{font-size:12px;color:#d6b66e;margin:0 0 8px}
- #latestComparison{display:grid;gap:7px}
+ #comparisonPanel{display:block!important;visibility:visible!important;opacity:1!important;margin:14px 0;padding:12px;border:1px solid #d8a63888;border-radius:11px;background:#d8a63812;text-align:right;min-height:58px}
+ #comparisonPanel h3{font-size:13px;color:#f5d27e;margin:0 0 8px}
+ #latestComparison{display:grid;gap:7px;color:#f4f0e6;font-size:11px;line-height:1.7}
  .prediction-comparison-row{display:grid;gap:3px;padding:8px;border-radius:8px;background:#ffffff09;font-size:10px}
  .prediction-comparison-row strong{color:#f5d27e;font-size:11px}
  .prediction-comparison-row span{color:#b8bdc8}
@@ -83,10 +83,10 @@ body{min-height:100svh;overflow-x:hidden}
  <div class="live-results-heading">نتيجة الجولة الفعلية</div>
  <div id="latestRoundValue">بانتظار أول نتيجة</div>
  <div id="latestRoundMeta">اترك اللعبة مفتوحة حتى تنتهي الجولة الأولى.</div>
+ <div id="comparisonPanel"><h3>مقارنة المؤشر بالنتائج الفعلية</h3><div id="latestComparison">في انتظار أول جولة تكتمل بعد حفظ مؤشرها المسبق.</div></div>
  <div class="live-results-subtitle">آخر 10 جولات مسجلة</div>
  <ol id="recentRoundsList"></ol>
  <div id="liveRoundsCount">إجمالي النتائج الفعلية المحفوظة: 0</div>
- <div id="comparisonPanel"><h3>مقارنة المؤشر بالنتائج الفعلية</h3><div id="latestComparison">ستظهر المقارنة بعد تسجيل أول نتيجة جديدة.</div></div>
 </section>
 <p class="subnote" id="subnote" hidden>النسبة تقدير إحصائي من النتائج المسجلة، وليست ضمانًا لنتيجة الجولة القادمة.</p><p id="rollingStats" hidden aria-live="polite"></p><div class="round-entry" hidden><label for="actualRound">نتيجة الجولة الفعلية (مثال 2.35)</label><input id="actualRound" type="number" min="1" step="0.01" inputmode="decimal" placeholder="اكتب المضاعف بعد انتهاء الجولة"><button id="saveActualRound" type="button">حفظ النتيجة وتحديث التحليل</button><small id="actualRoundMessage">لا تتغير الإحصائية إلا بعد إدخال نتيجة فعلية أو استيرادها من سجل اللعبة.</small></div>
 <section class="history-drawer" hidden><button id="toggleHistory"></button><div id="historyPanel"><textarea id="historyInput"></textarea><button id="sampleHistory"></button><button id="saveHistory"></button><span id="historyMessage"></span></div></section>
@@ -95,5 +95,5 @@ body{min-height:100svh;overflow-x:hidden}
 </main>
 <footer hidden><span class="crown">♛</span><strong>Eng Amir Salama</strong><small>DEVELOPER</small></footer>
 <div class="disclaimer" hidden>مؤشر إحصائي تجريبي وليس توقعًا مؤكدًا.</div>
-<script src="analytics.js?v=20261116-9"></script><script src="decoder.js?v=20261116-9"></script><script src="collector.js?v=20261116-9"></script><script src="app.js?v=20261116-14"></script><script src="live-lab.js?v=20261116-9"></script>
+<script src="analytics.js?v=20261116-9"></script><script src="decoder.js?v=20261116-9"></script><script src="collector.js?v=20261116-9"></script><script src="app.js?v=20261116-15"></script><script src="live-lab.js?v=20261116-9"></script>
 </body></html>
