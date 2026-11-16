@@ -1,4 +1,4 @@
-(() => {
+(() => {\n if(window.__crashPredictorBridgeInstalled)return;\n window.__crashPredictorBridgeInstalled=true;
  const send = async () => {
   try {
    const {recentRounds=[],predictorBridge={}}=await chrome.storage.local.get(["recentRounds","predictorBridge"]);
