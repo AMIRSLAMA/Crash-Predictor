@@ -64,6 +64,12 @@
  chrome.storage.onChanged.addListener((changes, area) => {
   if (area === "local" && changes.recentRounds) send();
  });
+ // Ask the page to identify itself; this also works when the bridge is injected late.
+ const pingPage=()=>window.postMessage({source:"CRASH_LIVE_EXTENSION",type:"PING"},pageOrigin);
+ pingPage();
+ setTimeout(pingPage,500);
+ setTimeout(pingPage,1500);
+ setTimeout(pingPage,3000);
  send();
- setTimeout(send, 1000);
+ setTimeout(send,1000);
 })();
