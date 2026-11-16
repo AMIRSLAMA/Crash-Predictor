@@ -4,11 +4,25 @@
  const valid = v => {const n=Number(v);return Number.isFinite(n)&&n>=1&&n<=100000?n:null;};
  window.addEventListener("message", async event => {
   const d=event.data;
-  if(event.source!==window||event.origin!==location.origin||!d||d.source!=="ROHNY_CRASH_COLLECTOR"||d.kind!=="signalr")return;
+  if(event.source!==window||event.origin!==location.origin||!d||d.source!=="ROHNY_CRASH_COLLECTOR")return;
+  const {collectorDiagnostics={}}=await chrome.storage.local.get("collectorDiagnostics");
+  const diag={...collectorDiagnostics};
+  if(d.kind==="socket"){
+   if(d.action==="created")diag.wsCreated=(diag.wsCreated||0)+1;
+   if(d.action==="opened")diag.wsOpened=(diag.wsOpened||0)+1;
+   if(d.action==="message"){diag.wsFrames=(diag.wsFrames||0)+1;diag.lastDataType=d.dataType;diag.lastDataLength=d.dataLength;}
+   if(d.action==="error")diag.wsErrors=(diag.wsErrors||0)+1;
+   if(d.action==="closed")diag.wsClosed=(diag.wsClosed||0)+1;
+   if(d.action==="protocol")diag.lastProtocolType=d.protocolType;
+   if(d.action==="unparsed")diag.unparsedFrames=(diag.unparsedFrames||0)+1;
+   diag.lastSeenAt=new Date().toISOString();
+   await chrome.storage.local.set({collectorDiagnostics:diag});
+   return;
+  }
+  if(d.kind!=="signalr")return;
   const a=Array.isArray(d.args)?d.args:[],o=a[0]&&typeof a[0]==="object"?a[0]:{};
   const target=String(d.target||"");
-  const {collectorDiagnostics={}}=await chrome.storage.local.get("collectorDiagnostics");
-  const diag={...collectorDiagnostics,wsMessages:(collectorDiagnostics.wsMessages||0)+1,lastTarget:target,lastSeenAt:new Date().toISOString()};
+  diag.wsMessages=(diag.wsMessages||0)+1;diag.lastTarget=target;diag.lastSeenAt=new Date().toISOString();
   const isCrash=target==="OnCrash",isResult=target==="OnResult";
   if(!isCrash&&!isResult){await chrome.storage.local.set({collectorDiagnostics:diag});return;}
   const roundId=o.l??o.roundId??o.round_id;
