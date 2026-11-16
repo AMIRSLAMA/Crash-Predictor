@@ -49,17 +49,22 @@ $("sampleHistory").addEventListener("click",()=>{input.value="1.12 1.45 2.08 1.0
 $("saveHistory").addEventListener("click",()=>{const values=CrashAnalytics.parseMultipliers(input.value);if(values.length<3){$("historyMessage").textContent="أدخل 3 نتائج صحيحة على الأقل.";return;}localStorage.setItem("crash-history",input.value);$("historyMessage").textContent="تم حفظ "+values.length+" نتيجة على هذا الجهاز.";});
 
 // استقبال الجولات المكتملة من إضافة Chrome وربطها بالسجل المحلي.
-window.addEventListener("message",async event=>{
- const d=event.data;
- if(event.source!==window||event.origin!==location.origin||!d||d.source!=="CRASH_LIVE_EXTENSION"||d.type!=="ROUND"||!d.round)return;
- const round=d.round,value=Number(round.finalMultiplier);
- if(!round.roundId||!Number.isFinite(value)||value<1||value>100000)return;
+function receiveLiveRound(round){
+ const value=Number(round?.finalMultiplier);
+ if(!round?.roundId||!Number.isFinite(value)||value<1||value>100000)return;
  const merged=CrashCollector.mergeCollections(loadCollected(),[round]);
  saveCollected(merged.rounds);
  const message=$("actualRoundMessage");
  if(message)message.textContent="وصلت نتيجة مباشرة: الجولة "+round.roundId+" — "+value.toFixed(2)+"x. إجمالي الجولات المحفوظة: "+merged.rounds.length;
  const btn=$("nextRound");
  if(btn&&!btn.disabled)btn.click();
+}
+window.addEventListener("crash-live-round",event=>{
+ try{receiveLiveRound(JSON.parse(String(event.detail||"{}")));}catch(_){}
+});
+window.addEventListener("message",event=>{
+ const d=event.data;
+ if(event.origin===location.origin&&d?.source==="CRASH_LIVE_EXTENSION"&&d.type==="ROUND"&&d.round)receiveLiveRound(d.round);
 });
 window.postMessage({source:"CRASH_PREDICTOR_PAGE",type:"READY"},location.origin);
 $("saveActualRound").addEventListener("click",()=>{
