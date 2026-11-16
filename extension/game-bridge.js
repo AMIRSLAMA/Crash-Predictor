@@ -1,6 +1,7 @@
 (() => {
  if (window.__crashLiveBridgeInstalled) return;
  window.__crashLiveBridgeInstalled = true;
+ chrome.storage.local.get("collectorDiagnostics").then(({collectorDiagnostics={}})=>chrome.storage.local.set({collectorDiagnostics:{...collectorDiagnostics,pageUrl:location.href,frameUrl:location.href,iframeUrls:[...document.querySelectorAll("iframe")].map(x=>x.src||"(iframe بلا src)").filter(Boolean)}})).catch(()=>{});
  const valid = v => {const n=Number(v);return Number.isFinite(n)&&n>=1&&n<=100000?n:null;};
  window.addEventListener("message", async event => {
   const d=event.data;
