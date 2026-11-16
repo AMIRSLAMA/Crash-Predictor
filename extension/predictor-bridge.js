@@ -2,8 +2,15 @@
  const send = async () => {
   try {
    const {recentRounds=[]}=await chrome.storage.local.get("recentRounds");
-   for(const round of recentRounds) window.postMessage({source:"CRASH_LIVE_EXTENSION",type:"ROUND",round},location.origin);
-  } catch (_) {}
+   let sent=0;
+   for(const round of recentRounds){
+    window.dispatchEvent(new CustomEvent("crash-live-round",{detail:JSON.stringify(round)}));
+    sent++;
+   }
+   await chrome.storage.local.set({predictorBridge:{lastSendAt:new Date().toISOString(),sent,total:Array.isArray(recentRounds)?recentRounds.length:0,pageUrl:location.href}});
+  } catch (error) {
+   try{await chrome.storage.local.set({predictorBridge:{lastError:String(error),pageUrl:location.href}});}catch(_){}
+  }
  };
  window.addEventListener("message",event=>{
   const d=event.data;
