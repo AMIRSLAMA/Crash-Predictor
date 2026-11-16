@@ -48,16 +48,50 @@ $("toggleHistory").addEventListener("click",()=>{const panel=$("historyPanel"),o
 $("sampleHistory").addEventListener("click",()=>{input.value="1.12 1.45 2.08 1.01 3.62 1.78 5.24 1.20 2.31 1.04 8.70 1.66 2.05 1.33 4.10 1.09 12.40 2.70 1.51 1.02";});
 $("saveHistory").addEventListener("click",()=>{const values=CrashAnalytics.parseMultipliers(input.value);if(values.length<3){$("historyMessage").textContent="أدخل 3 نتائج صحيحة على الأقل.";return;}localStorage.setItem("crash-history",input.value);$("historyMessage").textContent="تم حفظ "+values.length+" نتيجة على هذا الجهاز.";});
 
+// تحديث المؤشر تلقائيًا بعد وصول جولة جديدة، دون الضغط على زر يدوي.
+let predictionRefreshTimer=null;
+function schedulePredictionRefresh(){
+ if(predictionRefreshTimer)clearTimeout(predictionRefreshTimer);
+ predictionRefreshTimer=setTimeout(()=>{refreshPredictionFromHistory();},180);
+}
+async function refreshPredictionFromHistory(){
+ const number=$("multiplier"),thresholdEl=$("autoThreshold"),status=$("status"),btn=$("nextRound");
+ try{
+  const {values}=await predictionValues();
+  if(values.length<30){
+   number.innerHTML="--<small>%</small>";
+   thresholdEl.textContent="بانتظار اكتمال سجل النتائج";
+   if(status)status.textContent="السجل يحتوي على "+values.length+" نتيجة؛ يلزم 30 نتيجة على الأقل.";
+   return;
+  }
+  const sample=values.slice(-Math.min(100,values.length));
+  const candidates=[2,3,5,10];
+  const threshold=candidates.map(t=>({t,rate:sample.filter(v=>v>=t).length/sample.length}))
+   .sort((a,b)=>Math.abs(a.rate-.5)-Math.abs(b.rate-.5)||a.t-b.t)[0].t;
+  const wins=sample.filter(v=>v>=threshold).length;
+  const p=(wins+10)/(sample.length+20);
+  number.innerHTML=(p*100).toFixed(1)+"<small>%</small>";
+  thresholdEl.textContent="الهدف الإحصائي: "+threshold+"x فأكثر";
+  if(status)status.textContent="تم تحديث المؤشر من "+values.length+" جولة محفوظة.";
+  showRolling(values);
+  if(btn&&!btn.disabled)btn.textContent="تحديث المؤشر";
+ }catch(error){
+  if(status)status.textContent="تعذر تحديث المؤشر: "+String(error&&error.message||error);
+ }
+}
+
 // استقبال الجولات المكتملة من إضافة Chrome وربطها بالسجل المحلي.
 function receiveLiveRound(round){
  const value=Number(round?.finalMultiplier);
  if(!round?.roundId||!Number.isFinite(value)||value<1||value>100000)return false;
- const merged=CrashCollector.mergeCollections(loadCollected(),[round]);
+ const current=loadCollected();
+ const existing=current.find(r=>String(r.roundId)===String(round.roundId));
+ if(existing&&Number(existing.finalMultiplier)===value)return true;
+ const merged=CrashCollector.mergeCollections(current,[round]);
  saveCollected(merged.rounds);
  const message=$("actualRoundMessage");
  if(message)message.textContent="وصلت نتيجة مباشرة: الجولة "+round.roundId+" — "+value.toFixed(2)+"x. إجمالي الجولات المحفوظة: "+merged.rounds.length;
- const btn=$("nextRound");
- if(btn&&!btn.disabled)btn.click();
+ schedulePredictionRefresh();
  return true;
 }
 window.addEventListener("crash-live-round",event=>{
@@ -132,15 +166,6 @@ $("exportCsv").addEventListener("click",()=>{const rounds=loadCollected();if(!ro
 "));});
 $("clearCollected").addEventListener("click",()=>{if(!loadCollected().length){$("decoderStatus").textContent="السجل المحفوظ فارغ بالفعل.";return;}if(!window.confirm("هل تريد مسح كل الجولات المحفوظة على هذا الجهاز؟ لا يمكن التراجع عن ذلك."))return;localStorage.removeItem(STORAGE_KEY);renderCollected();$("decoderStatus").textContent="تم مسح السجل المحفوظ من هذا المتصفح.";});
 renderCollected();
-// اعرض النسبة تلقائيًا عند فتح الصفحة، من دون تسجيل جولة توقع جديدة.
-predictionValues().then(({values})=>{
- if(values.length<30){$("status").textContent="تعذر تحميل سجل النتائج — جرّب تحديث الصفحة.";return;}
- const candidates=[2,3,5,10];
- const sample=values.slice(-Math.min(100,values.length));
- const threshold=candidates.map(t=>({t,rate:sample.filter(v=>v>=t).length/sample.length})).sort((a,b)=>Math.abs(a.rate-.5)-Math.abs(b.rate-.5)||a.t-b.t)[0].t;
- const wins=sample.filter(v=>v>=threshold).length,p=(wins+10)/(sample.length+20);
- $("multiplier").innerHTML=(p*100).toFixed(1)+"<small>%</small>";
- $("autoThreshold").textContent="العتبة التلقائية: "+threshold+"x فأكثر";
- $("status").textContent="تم تحميل "+values.length+" جولة؛ النسبة محسوبة من آخر "+sample.length+" جولة. أضف نتيجة الجولة الفعلية لتحديثها.";showRolling(values);
-}).catch(()=>{$("status").textContent="تعذر تحميل البيانات. افتح الموقع من GitHub Pages ثم حدّث الصفحة.";});
+// تحميل المؤشر تلقائيًا فور فتح البرنامج.
+refreshPredictionFromHistory();
 })();
