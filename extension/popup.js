@@ -27,7 +27,9 @@ async function renderDiagnostics(){
   "آخر نشاط: "+(d.lastSeenAt||"لا يوجد"),
   "أخطاء الاتصال: "+(d.wsErrors||0)+" · إطارات غير مقروءة: "+(d.unparsedFrames||0),
   d.lastError?"خطأ: "+d.lastError:"",
-  "نطاق اللعبة: "+(data.gameOrigin||"غير محدد")
+  "نطاق اللعبة: "+(data.gameOrigin||"غير محدد"),
+  "عنوان الصفحة المحقونة: "+(d.pageUrl||"لم يتم حقن الجسر"),
+  "إطارات اللعبة داخل الصفحة: "+((d.iframeUrls||[]).join(" | ")||"لا توجد إطارات ظاهرة")
  ].filter(Boolean).join("\n");
 }
 renderDiagnostics();
@@ -42,8 +44,8 @@ start.addEventListener("click",async()=>{
   await chrome.storage.local.set({collectorEnabled:true,gameOrigin:origin,gameTabId:tab.id,collectorDiagnostics:{wsCreated:0,wsOpened:0,wsFrames:0,wsMessages:0,roundsCaptured:0}});
   await chrome.scripting.unregisterContentScripts({ids:["crash-game-hook","crash-game-bridge"]}).catch(()=>{});
   await chrome.scripting.registerContentScripts([
-   {id:"crash-game-hook",matches:[origin+"/*"],js:["game-hook.js"],runAt:"document_start",world:"MAIN",persistAcrossSessions:true},
-   {id:"crash-game-bridge",matches:[origin+"/*"],js:["game-bridge.js"],runAt:"document_start",world:"ISOLATED",persistAcrossSessions:true}
+   {id:"crash-game-hook",matches:[origin+"/*"],js:["game-hook.js"],runAt:"document_start",world:"MAIN",allFrames:true,persistAcrossSessions:true},
+   {id:"crash-game-bridge",matches:[origin+"/*"],js:["game-bridge.js"],runAt:"document_start",world:"ISOLATED",allFrames:true,persistAcrossSessions:true}
   ]);
   status.textContent="تم الربط. جاري إعادة تحميل صفحة اللعبة لبدء الالتقاط من اتصال WebSocket.";
   await chrome.tabs.reload(tab.id);
