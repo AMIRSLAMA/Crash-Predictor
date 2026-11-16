@@ -56,3 +56,15 @@ start.addEventListener("click",async()=>{
 document.getElementById("stop").addEventListener("click",async()=>{
  try{await chrome.scripting.unregisterContentScripts({ids:["crash-game-hook","crash-game-bridge"]});await chrome.storage.local.set({collectorEnabled:false});renderDiagnostics();}catch(e){status.textContent=e.message||String(e);}
 });
+document.getElementById("connectPredictor").addEventListener("click",async()=>{
+ try{
+  const [tab]=await chrome.tabs.query({active:true,currentWindow:true});
+  if(!tab?.id||!tab.url)throw new Error("افتح صفحة Predictor أولًا.");
+  const url=new URL(tab.url);
+  if(url.hostname!=="amirslama.github.io"||!url.pathname.startsWith("/Crash-Predictor"))throw new Error("التبويب الحالي ليس صفحة Crash Predictor. افتح صفحة البرنامج ثم اضغط الزر.");
+  await chrome.scripting.executeScript({target:{tabId:tab.id},files:["predictor-bridge.js"],world:"ISOLATED"});
+  status.textContent="تم حقن جسر Predictor في الصفحة الحالية. حدّث الصفحة مرة واحدة ثم افتح التشخيص مجددًا.";
+  await chrome.storage.local.set({predictorBridge:{...(await chrome.storage.local.get("predictorBridge")).predictorBridge,pageInjected:true,manualInjectAt:new Date().toISOString(),pageUrl:tab.url}});
+  renderDiagnostics();
+ }catch(e){status.textContent=e.message||String(e);}
+});
