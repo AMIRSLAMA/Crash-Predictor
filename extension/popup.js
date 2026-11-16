@@ -4,6 +4,12 @@ let actionMessage="";
 const diagnostics=document.createElement("div");
 diagnostics.style.cssText="margin-top:10px;padding-top:9px;border-top:1px solid #444;line-height:1.9;color:#f0c45c;white-space:pre-line";
 status.after(diagnostics);
+async function unregisterGameScripts(){
+ const wanted=new Set(["crash-game-hook","crash-game-bridge"]);
+ const registered=await chrome.scripting.getRegisteredContentScripts();
+ const ids=registered.filter(script=>wanted.has(script.id)).map(script=>script.id);
+ if(ids.length)await chrome.scripting.unregisterContentScripts({ids});
+}
 async function renderDiagnostics(){
  const data=await chrome.storage.local.get(["collectorDiagnostics","recentRounds","collectorEnabled","gameOrigin","gameTabId","predictorBridge"]);
  const d=data.collectorDiagnostics||{},total=Array.isArray(data.recentRounds)?data.recentRounds.length:0;
@@ -44,7 +50,7 @@ start.addEventListener("click",async()=>{
   const granted=await chrome.permissions.request({origins:[origin+"/*"]});
   if(!granted)throw new Error("لم يتم منح إذن نطاق اللعبة.");
   await chrome.storage.local.set({collectorEnabled:true,gameOrigin:origin,gameTabId:tab.id,collectorDiagnostics:{wsCreated:0,wsOpened:0,wsFrames:0,wsMessages:0,roundsCaptured:0}});
-  await chrome.scripting.unregisterContentScripts({ids:["crash-game-hook","crash-game-bridge"]}).catch(()=>{});
+  await unregisterGameScripts();
   await chrome.scripting.registerContentScripts([
    {id:"crash-game-hook",matches:[origin+"/*"],js:["game-hook.js"],runAt:"document_start",world:"MAIN",allFrames:true,persistAcrossSessions:true},
    {id:"crash-game-bridge",matches:[origin+"/*"],js:["game-bridge.js"],runAt:"document_start",world:"ISOLATED",allFrames:true,persistAcrossSessions:true}
@@ -55,7 +61,7 @@ start.addEventListener("click",async()=>{
  }catch(e){actionMessage="تعذر ربط صفحة Predictor: "+(e.message||String(e));status.textContent=actionMessage;}
 });
 document.getElementById("stop").addEventListener("click",async()=>{
- try{await chrome.scripting.unregisterContentScripts({ids:["crash-game-hook","crash-game-bridge"]});await chrome.storage.local.set({collectorEnabled:false});renderDiagnostics();}catch(e){status.textContent=e.message||String(e);}
+ try{await unregisterGameScripts();await chrome.storage.local.set({collectorEnabled:false});renderDiagnostics();}catch(e){status.textContent=e.message||String(e);}
 });
 document.getElementById("connectPredictor").addEventListener("click",async()=>{
  try{
