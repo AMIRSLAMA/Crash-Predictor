@@ -10,7 +10,7 @@
     const msg = JSON.parse(frame);
     const list = Array.isArray(msg) ? msg : [msg];
     for (const item of list) {
-     if (item && item.type === 1 && ["OnCrash","OnResult"].includes(item.target)) {
+     if (item && item.type === 1 && typeof item.target === "string") {
       window.postMessage({source:"ROHNY_CRASH_COLLECTOR",kind:"signalr",target:item.target,args:item.arguments||[]}, location.origin);
      }
     }
