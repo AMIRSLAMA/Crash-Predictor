@@ -2,7 +2,7 @@
 "use strict";
 const $=id=>document.getElementById(id),input=$("historyInput"),STORAGE_KEY="crash-collected-rounds-v1";
 let importedHistory=[];
-const importedHistoryPromise=fetch("data/crash-rounds.json",{cache:"no-store"})
+const importedHistoryPromise=fetch(new URL("./data/crash-rounds.json",document.baseURI),{cache:"no-store"})
  .then(response=>{if(!response.ok)throw new Error("History file unavailable");return response.json();})
  .then(rows=>{if(!Array.isArray(rows))throw new Error("Invalid history file");importedHistory=rows.filter(r=>Number.isFinite(Number(r.multiplier))&&Number(r.multiplier)>=1);return importedHistory;})
  .catch(()=>{importedHistory=[];return importedHistory;});
@@ -41,14 +41,17 @@ $("toggleHistory").addEventListener("click",()=>{const panel=$("historyPanel"),o
 $("sampleHistory").addEventListener("click",()=>{input.value="1.12 1.45 2.08 1.01 3.62 1.78 5.24 1.20 2.31 1.04 8.70 1.66 2.05 1.33 4.10 1.09 12.40 2.70 1.51 1.02";});
 $("saveHistory").addEventListener("click",()=>{const values=CrashAnalytics.parseMultipliers(input.value);if(values.length<3){$("historyMessage").textContent="أدخل 3 نتائج صحيحة على الأقل.";return;}localStorage.setItem("crash-history",input.value);$("historyMessage").textContent="تم حفظ "+values.length+" نتيجة على هذا الجهاز.";});
 $("nextRound").addEventListener("click",async()=>{
- const {values,source}=await predictionValues(),status=$("status"),number=$("multiplier"),btn=$("nextRound"),note=$("subnote");
+ const btn=$("nextRound"),status=$("status"),number=$("multiplier"),note=$("subnote");
+ btn.disabled=true;btn.textContent="جارٍ حساب النسبة…";
+ try {
+ const {values,source}=await predictionValues();
  const candidates=[2,3,5,10];
- const threshold=candidates.map(t=>({t,rate:values.filter(v=>v>=t).length/values.length})).sort((a,b)=>Math.abs(a.rate-.5)-Math.abs(b.rate-.5)||a.t-b.t)[0].t;
  if(values.length<30){
   $("historyPanel").classList.remove("hidden");$("toggleHistory").setAttribute("aria-expanded","true");$("toggleHistory").textContent="− إخفاء سجل النتائج";
-  status.textContent="محتاج 30 نتيجة صحيحة على الأقل؛ المتاح حاليًا "+values.length;
-  number.innerHTML='--<small>%</small>';note.textContent="أضف نتائج أكثر أو الصق سجلًا تاريخيًا ثم اضغط مرة أخرى.";return;
+  status.textContent="تعذر تحميل سجل النتائج. المتاح حاليًا "+values.length+" نتيجة؛ تأكد من فتح رابط GitHub Pages.";
+  number.innerHTML="--<small>%</small>";note.textContent="تعذر الحساب لعدم توفر 30 نتيجة على الأقل.";return;
  }
+ const threshold=candidates.map(t=>({t,rate:values.filter(v=>v>=t).length/values.length})).sort((a,b)=>Math.abs(a.rate-.5)-Math.abs(b.rate-.5)||a.t-b.t)[0].t;
  const wins=values.filter(v=>v>=threshold).length,base=wins/values.length;
  // Laplace/Beta smoothing: prevents tiny samples from producing extreme 0% or 100% estimates.
  const priorStrength=20,p=(wins+priorStrength*0.5)/(values.length+priorStrength);
@@ -61,7 +64,13 @@ $("nextRound").addEventListener("click",async()=>{
  const low=Math.max(0,center-margin)*100,high=Math.min(1,center+margin)*100;
  note.textContent="تم الحساب من "+values.length+" جولة ("+source+"). اختار البرنامج العتبة الأقرب إلى معدل تاريخي 50% من بين 2x و3x و5x و10x. تحقق الشرط في "+wins+" جولة ("+(base*100).toFixed(1)+"% خام). نطاق عدم اليقين التقريبي 95%: "+low.toFixed(1)+"%–"+high.toFixed(1)+"%. أُضيف التقدير لسجل الاختبار؛ أدخل النتيجة الفعلية في المختبر لقياس الدقة. الجولات المستقلة قد لا تتبع هذا المعدل.";
  recordPrediction({id:Date.now(),time:new Date().toISOString(),threshold,p,actual:null,n:values.length,base,source,method:"smoothed-historical-frequency"});
- btn.disabled=true;btn.innerHTML="✓ تم حساب الاحتمال";setTimeout(()=>{btn.disabled=false;btn.innerHTML="<span>✦</span> الجولة التالية · احسب الاحتمال";},900);
+ btn.textContent="✓ تم حساب النسبة";
+ } catch(error) {
+  status.textContent="حصل خطأ أثناء الحساب. أعد تحميل الصفحة وجرب مرة أخرى.";
+  note.textContent=String(error&&error.message||error);
+ } finally {
+  setTimeout(()=>{btn.disabled=false;btn.textContent="الجولة التالية";},900);
+ }
 });
 
 const decoderInput=$("decoderInput"),decoderResults=$("decoderResults");
@@ -78,4 +87,14 @@ $("exportJson").addEventListener("click",()=>{const rounds=loadCollected();if(!r
 $("exportCsv").addEventListener("click",()=>{const rounds=loadCollected();if(!rounds.length){$("decoderStatus").textContent="لا توجد جولات لتصديرها حتى الآن.";return;}const q=v=>'"'+String(v??"").replace(/"/g,'""')+'"';const rows=[["roundId","finalMultiplier","sources","mismatch","crash","resultCrash","resultUser","firstEventTime","lastEventTime"],...rounds.map(r=>[r.roundId,r.finalMultiplier,(r.sources||[]).join("|"),r.mismatch,r.crash,r.resultCrash,r.resultUser,r.firstEventTime,r.lastEventTime])];downloadFile("crash-rounds.csv","text/csv;charset=utf-8","\uFEFF"+rows.map(row=>row.map(q).join(",")).join("\r\n"));});
 $("clearCollected").addEventListener("click",()=>{if(!loadCollected().length){$("decoderStatus").textContent="السجل المحفوظ فارغ بالفعل.";return;}if(!window.confirm("هل تريد مسح كل الجولات المحفوظة على هذا الجهاز؟ لا يمكن التراجع عن ذلك."))return;localStorage.removeItem(STORAGE_KEY);renderCollected();$("decoderStatus").textContent="تم مسح السجل المحفوظ من هذا المتصفح.";});
 renderCollected();
+// اعرض النسبة تلقائيًا عند فتح الصفحة، من دون تسجيل جولة توقع جديدة.
+predictionValues().then(({values})=>{
+ if(values.length<30){$("status").textContent="تعذر تحميل سجل النتائج — جرّب تحديث الصفحة.";return;}
+ const candidates=[2,3,5,10];
+ const threshold=candidates.map(t=>({t,rate:values.filter(v=>v>=t).length/values.length})).sort((a,b)=>Math.abs(a.rate-.5)-Math.abs(b.rate-.5)||a.t-b.t)[0].t;
+ const wins=values.filter(v=>v>=threshold).length,p=(wins+10)/(values.length+20);
+ $("multiplier").innerHTML=(p*100).toFixed(1)+"<small>%</small>";
+ $("autoThreshold").textContent="العتبة التلقائية: "+threshold+"x فأكثر";
+ $("status").textContent="تم تحميل "+values.length+" جولة تاريخية. اضغط الجولة التالية لتسجيل تقدير جديد.";
+}).catch(()=>{$("status").textContent="تعذر تحميل البيانات. افتح الموقع من GitHub Pages ثم حدّث الصفحة.";});
 })();
