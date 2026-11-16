@@ -106,6 +106,13 @@ window.addEventListener("message",event=>{
   if(receiveLiveRound(d.round))window.postMessage({source:"CRASH_PREDICTOR_PAGE",type:"ROUND_RECEIVED",roundId:String(d.round.roundId)},location.origin);
  }
 });
+// Handshake response: supports extension injection after the page has already loaded.
+window.addEventListener("message",event=>{
+ const d=event.data;
+ if(event.source===window&&event.origin===location.origin&&d?.source==="CRASH_LIVE_EXTENSION"&&d.type==="PING"){
+  window.postMessage({source:"CRASH_PREDICTOR_PAGE",type:"READY"},location.origin);
+ }
+});
 window.postMessage({source:"CRASH_PREDICTOR_PAGE",type:"READY"},location.origin);
 $("saveActualRound").addEventListener("click",()=>{
  const field=$("actualRound"),message=$("actualRoundMessage"),value=Number(field.value);
