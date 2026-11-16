@@ -68,7 +68,9 @@ window.addEventListener("crash-live-round",event=>{
 });
 window.addEventListener("message",event=>{
  const d=event.data;
- if(event.origin===location.origin&&d?.source==="CRASH_LIVE_EXTENSION"&&d.type==="ROUND"&&d.round)receiveLiveRound(d.round);
+ if(event.origin===location.origin&&d?.source==="CRASH_LIVE_EXTENSION"&&d.type==="ROUND"&&d.round){
+  if(receiveLiveRound(d.round))window.postMessage({source:"CRASH_PREDICTOR_PAGE",type:"ROUND_RECEIVED",roundId:String(d.round.roundId)},location.origin);
+ }
 });
 window.postMessage({source:"CRASH_PREDICTOR_PAGE",type:"READY"},location.origin);
 $("saveActualRound").addEventListener("click",()=>{
