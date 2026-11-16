@@ -9,7 +9,7 @@ function render(){const a=read(),box=$("labHistory"),score=$("labScore");box.rep
  score.textContent="اختبارات محسومة: "+settled.length+" · Brier Score: "+(mean===null?"—":mean.toFixed(4))+" (الأقل أفضل؛ 0 مثالي)";
  const ol=document.createElement("ol");a.slice(-12).reverse().forEach(x=>{const li=document.createElement("li");li.textContent=new Date(x.time).toLocaleString("ar-EG")+" · توقع "+pct(x.p)+" لعتبة "+x.threshold+"x+ · "+(x.actual===null?"بانتظار النتيجة":"النتيجة "+x.actual+"x — "+(x.actual>=x.threshold?"نجاح":"عدم نجاح"));ol.appendChild(li)});box.appendChild(ol)}
 $("labAnalyze").addEventListener("click",()=>{const vals=CrashAnalytics.parseMultipliers($("historyInput").value);if(vals.length<30){$("labOutput").textContent="محتاج 30 نتيجة صحيحة على الأقل في سجل النتائج بالأعلى.";return}
- const t=Number($("labThreshold").value),base=vals.filter(x=>x>=t).length/vals.length,tail=vals.slice(-100),recent=tail.filter(x=>x>=t).length,smoothed=(recent+base*20)/(tail.length+20),p=.7*base+.3*smoothed;
+ const candidates=[2,3,5,10],t=candidates.map(v=>({t:v,rate:vals.filter(x=>x>=v).length/vals.length})).sort((a,b)=>Math.abs(a.rate-.5)-Math.abs(b.rate-.5)||a.t-b.t)[0].t,base=vals.filter(x=>x>=t).length/vals.length,tail=vals.slice(-100),recent=tail.filter(x=>x>=t).length,smoothed=(recent+base*20)/(tail.length+20),p=.7*base+.3*smoothed;
  const item={id:Date.now(),time:new Date().toISOString(),threshold:t,p,actual:null,n:vals.length,base,recent:smoothed};
  const a=read();a.push(item);write(a);
  $("labOutput").textContent="احتمال تاريخي تقديري: "+pct(p)+" لنتيجة "+t+"x+ · المعدل العام "+pct(base)+" · آخر 100 جولة (بتنعيم إحصائي) "+pct(smoothed)+". تم تسجيل الاحتمال الآن قبل إدخال النتيجة؛ ليس توقعًا مضمونًا.";
