@@ -4,7 +4,7 @@ const diagnostics=document.createElement("div");
 diagnostics.style.cssText="margin-top:10px;padding-top:9px;border-top:1px solid #444;line-height:1.9;color:#f0c45c;white-space:pre-line";
 status.after(diagnostics);
 async function renderDiagnostics(){
- const data=await chrome.storage.local.get(["collectorDiagnostics","recentRounds","collectorEnabled","gameOrigin","gameTabId"]);
+ const data=await chrome.storage.local.get(["collectorDiagnostics","recentRounds","collectorEnabled","gameOrigin","gameTabId","predictorBridge"]);
  const d=data.collectorDiagnostics||{},total=Array.isArray(data.recentRounds)?data.recentRounds.length:0;
  let tabAlive=false;
  if(data.gameTabId){try{await chrome.tabs.get(data.gameTabId);tabAlive=true;}catch(_){}}
