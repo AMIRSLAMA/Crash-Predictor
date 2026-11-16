@@ -20,3 +20,10 @@ document.getElementById("start").addEventListener("click",async()=>{
 document.getElementById("stop").addEventListener("click",async()=>{
  try{await chrome.scripting.unregisterContentScripts({ids:["crash-game-hook","crash-game-bridge"]});await chrome.storage.local.set({collectorEnabled:false});status.textContent="تم إيقاف الالتقاط.";}catch(e){status.textContent=e.message||String(e);}
 });
+chrome.storage.local.get(["collectorDiagnostics","recentRounds"],data=>{
+ const d=data.collectorDiagnostics||{},total=Array.isArray(data.recentRounds)?data.recentRounds.length:0;
+ const line=document.createElement("div");
+ line.style.cssText="margin-top:10px;padding-top:9px;border-top:1px solid #444;line-height:1.8;color:#f0c45c";
+ line.textContent="تشخيص الالتقاط: رسائل اللعبة "+(d.wsMessages||0)+" · نتائج ملتقطة "+(d.roundsCaptured||0)+" · إجمالي محفوظ بالإضافة "+total+" · آخر حدث "+(d.lastTarget||"لا يوجد");
+ status.after(line);
+});
