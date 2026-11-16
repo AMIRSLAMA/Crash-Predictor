@@ -47,6 +47,20 @@ function downloadFile(name,type,content){
 $("toggleHistory").addEventListener("click",()=>{const panel=$("historyPanel"),open=panel.classList.toggle("hidden")===false;$("toggleHistory").setAttribute("aria-expanded",String(open));$("toggleHistory").textContent=open?"− إخفاء سجل النتائج":"＋ إدخال سجل النتائج السابقة";});
 $("sampleHistory").addEventListener("click",()=>{input.value="1.12 1.45 2.08 1.01 3.62 1.78 5.24 1.20 2.31 1.04 8.70 1.66 2.05 1.33 4.10 1.09 12.40 2.70 1.51 1.02";});
 $("saveHistory").addEventListener("click",()=>{const values=CrashAnalytics.parseMultipliers(input.value);if(values.length<3){$("historyMessage").textContent="أدخل 3 نتائج صحيحة على الأقل.";return;}localStorage.setItem("crash-history",input.value);$("historyMessage").textContent="تم حفظ "+values.length+" نتيجة على هذا الجهاز.";});
+
+// استقبال الجولات المكتملة من إضافة Chrome وربطها بالسجل المحلي.
+window.addEventListener("message",async event=>{
+ const d=event.data;
+ if(event.source!==window||event.origin!==location.origin||!d||d.source!=="CRASH_LIVE_EXTENSION"||d.type!=="ROUND"||!d.round)return;
+ const round=d.round,value=Number(round.finalMultiplier);
+ if(!round.roundId||!Number.isFinite(value)||value<1||value>100000)return;
+ const merged=CrashCollector.mergeCollections(loadCollected(),[round]);
+ saveCollected(merged.rounds);
+ const message=$("actualRoundMessage");
+ if(message)message.textContent="وصلت نتيجة مباشرة: الجولة "+round.roundId+" — "+value.toFixed(2)+"x. إجمالي الجولات المحفوظة: "+merged.rounds.length;
+ const btn=$("nextRound");
+ if(btn&&!btn.disabled)btn.click();
+});
 $("saveActualRound").addEventListener("click",()=>{
  const field=$("actualRound"),message=$("actualRoundMessage"),value=Number(field.value);
  if(!Number.isFinite(value)||value<1){message.textContent="اكتب نتيجة صحيحة أكبر من أو تساوي 1.";return;}
