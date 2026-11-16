@@ -12,6 +12,8 @@
    for (const round of (Array.isArray(recentRounds) ? recentRounds : [])) {
     // CustomEvent is shared with the page world and is already handled by app.js.
     window.dispatchEvent(new CustomEvent("crash-live-round", { detail: JSON.stringify(round) }));
+    // Fallback transport: page-world message listener, in case isolated-world DOM events are not delivered.
+    window.postMessage({ source: "CRASH_LIVE_EXTENSION", type: "ROUND", round }, pageOrigin);
     sent++;
    }
    await chrome.storage.local.set({
@@ -54,7 +56,10 @@
  });
  window.addEventListener("message", event => {
   const d = event.data;
-  if (event.source === window && event.origin === pageOrigin && d?.source === "CRASH_PREDICTOR_PAGE" && d.type === "READY") send();
+  if (event.source === window && event.origin === pageOrigin && d?.source === "CRASH_PREDICTOR_PAGE" && d.type === "READY") {
+   chrome.storage.local.get("predictorBridge").then(({ predictorBridge = {} }) => chrome.storage.local.set({ predictorBridge: { ...predictorBridge, pageReady: true, readyAt: new Date().toISOString(), pageUrl: location.href } })).catch(() => {});
+   send();
+  }
  });
  chrome.storage.onChanged.addListener((changes, area) => {
   if (area === "local" && changes.recentRounds) send();
