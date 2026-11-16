@@ -1,6 +1,11 @@
 (() => {
 "use strict";
 const $=id=>document.getElementById(id),input=$("historyInput"),STORAGE_KEY="crash-collected-rounds-v1";
+let importedHistory=[];
+const importedHistoryPromise=fetch("data/crash-rounds.json",{cache:"no-store"})
+ .then(response=>{if(!response.ok)throw new Error("History file unavailable");return response.json();})
+ .then(rows=>{if(!Array.isArray(rows))throw new Error("Invalid history file");importedHistory=rows.filter(r=>Number.isFinite(Number(r.multiplier))&&Number(r.multiplier)>=1);return importedHistory;})
+ .catch(()=>{importedHistory=[];return importedHistory;});
 input.value=localStorage.getItem("crash-history")||"";
 function loadCollected(){try{const data=JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]");return Array.isArray(data)?data:[];}catch(_){return [];}}
 function saveCollected(rounds){localStorage.setItem(STORAGE_KEY,JSON.stringify(rounds));renderCollected();}
@@ -12,10 +17,14 @@ function renderCollected(){
  if(!recent.length){const p=document.createElement("p");p.textContent="لسه مفيش نتائج محفوظة. الصق أول رسائل OnCrash أو OnResult واضغط «حلّل واجمع النتائج».";list.appendChild(p);return;}
  const ol=document.createElement("ol");recent.forEach(r=>{const li=document.createElement("li");li.textContent="جولة "+r.roundId+" — "+Number(r.finalMultiplier).toFixed(2)+"x · "+(r.sources||[]).join(" + ")+(r.mismatch?" · اختلاف بين المصدرين":"");ol.appendChild(li);});list.appendChild(ol);
 }
-function predictionValues(){
- const collected=loadCollected().map(r=>Number(r.finalMultiplier)).filter(v=>Number.isFinite(v)&&v>=1);
+async function predictionValues(){
+ await importedHistoryPromise;
+ const byRound=new Map();
+ importedHistory.forEach(r=>byRound.set(String(r.roundId),Number(r.multiplier)));
+ loadCollected().forEach(r=>{const value=Number(r.finalMultiplier);if(Number.isFinite(value)&&value>=1)byRound.set(String(r.roundId),value);});
+ const combined=[...byRound.entries()].sort((a,b)=>{const x=Number(a[0]),y=Number(b[0]);return Number.isFinite(x)&&Number.isFinite(y)?x-y:String(a[0]).localeCompare(String(b[0]));}).map(x=>x[1]);
  const manual=CrashAnalytics.parseMultipliers(input.value);
- if(collected.length>=30)return {values:collected,source:"الجولات المجمعة تلقائيًا"};
+ if(combined.length>=30)return {values:combined,source:"قاعدة النتائج المرفقة والجولات الجديدة المحفوظة"};
  return {values:manual,source:"السجل الذي أدخلته يدويًا"};
 }
 function recordPrediction(item){
@@ -31,8 +40,8 @@ function downloadFile(name,type,content){
 $("toggleHistory").addEventListener("click",()=>{const panel=$("historyPanel"),open=panel.classList.toggle("hidden")===false;$("toggleHistory").setAttribute("aria-expanded",String(open));$("toggleHistory").textContent=open?"− إخفاء سجل النتائج":"＋ إدخال سجل النتائج السابقة";});
 $("sampleHistory").addEventListener("click",()=>{input.value="1.12 1.45 2.08 1.01 3.62 1.78 5.24 1.20 2.31 1.04 8.70 1.66 2.05 1.33 4.10 1.09 12.40 2.70 1.51 1.02";});
 $("saveHistory").addEventListener("click",()=>{const values=CrashAnalytics.parseMultipliers(input.value);if(values.length<3){$("historyMessage").textContent="أدخل 3 نتائج صحيحة على الأقل.";return;}localStorage.setItem("crash-history",input.value);$("historyMessage").textContent="تم حفظ "+values.length+" نتيجة على هذا الجهاز.";});
-$("nextRound").addEventListener("click",()=>{
- const {values,source}=predictionValues(),status=$("status"),number=$("multiplier"),btn=$("nextRound"),note=$("subnote");
+$("nextRound").addEventListener("click",async()=>{
+ const {values,source}=await predictionValues(),status=$("status"),number=$("multiplier"),btn=$("nextRound"),note=$("subnote");
  const candidates=[2,3,5,10];
  const threshold=candidates.map(t=>({t,rate:values.filter(v=>v>=t).length/values.length})).sort((a,b)=>Math.abs(a.rate-.5)-Math.abs(b.rate-.5)||a.t-b.t)[0].t;
  if(values.length<30){
