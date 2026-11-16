@@ -19,7 +19,7 @@ async function renderDiagnostics(){
  start.style.opacity=active?".55":"1";
  diagnostics.textContent=[
   "تشخيص الالتقاط:",
-  "حالة جسر صفحة البرنامج: "+(data.predictorBridge?.lastSendAt?("أرسل "+(data.predictorBridge.sent||0)+" سجل — استقبل البرنامج "+(data.predictorBridge.received||0)+" جولة — "+data.predictorBridge.lastSendAt):data.predictorBridge?.lastError||"لم يسجل إرسالًا بعد"),
+  "حالة جسر صفحة البرنامج: "+(data.predictorBridge?.lastSendAt?("الصفحة "+(data.predictorBridge.pageReady?"متصلة":"لم تؤكد الاتصال")+" — أرسل "+(data.predictorBridge.sent||0)+" سجل — استقبل البرنامج "+(data.predictorBridge.received||0)+" جولة — "+data.predictorBridge.lastSendAt):data.predictorBridge?.lastError||"لم يسجل إرسالًا بعد"),
   "حالة الجامع: "+(active?"مرتبط ويعمل":data.collectorEnabled?"مفعّل — التبويب غير موجود":"غير مرتبط"),
   "اتصالات WebSocket: "+(d.wsCreated||0)+" · اتصالات مفتوحة: "+(d.wsOpened||0),
   "رسائل WebSocket: "+(d.wsFrames||0)+" · أحداث SignalR: "+(d.wsMessages||0),
