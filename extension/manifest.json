@@ -1,0 +1,18 @@
+{
+  "manifest_version": 3,
+  "name": "Crash Predictor — Live Round Collector",
+  "version": "1.0.0",
+  "description": "يلتقط نتائج OnCrash وOnResult من اتصال اللعبة ويرسلها إلى Crash Predictor محليًا.",
+  "permissions": ["activeTab", "scripting", "storage", "tabs"],
+  "host_permissions": ["https://amirslama.github.io/*"],
+  "optional_host_permissions": ["http://*/*", "https://*/*"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Crash Live Collector"
+  },
+  "content_scripts": [{
+    "matches": ["https://amirslama.github.io/Crash-Predictor/*"],
+    "js": ["predictor-bridge.js"],
+    "run_at": "document_start"
+  }]
+}
