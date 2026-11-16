@@ -33,7 +33,8 @@ $("sampleHistory").addEventListener("click",()=>{input.value="1.12 1.45 2.08 1.0
 $("saveHistory").addEventListener("click",()=>{const values=CrashAnalytics.parseMultipliers(input.value);if(values.length<3){$("historyMessage").textContent="أدخل 3 نتائج صحيحة على الأقل.";return;}localStorage.setItem("crash-history",input.value);$("historyMessage").textContent="تم حفظ "+values.length+" نتيجة على هذا الجهاز.";});
 $("nextRound").addEventListener("click",()=>{
  const {values,source}=predictionValues(),status=$("status"),number=$("multiplier"),btn=$("nextRound"),note=$("subnote");
- const threshold=Number($("nextThreshold").value);
+ const candidates=[2,3,5,10];
+ const threshold=candidates.map(t=>({t,rate:values.filter(v=>v>=t).length/values.length})).sort((a,b)=>Math.abs(a.rate-.5)-Math.abs(b.rate-.5)||a.t-b.t)[0].t;
  if(values.length<30){
   $("historyPanel").classList.remove("hidden");$("toggleHistory").setAttribute("aria-expanded","true");$("toggleHistory").textContent="− إخفاء سجل النتائج";
   status.textContent="محتاج 30 نتيجة صحيحة على الأقل؛ المتاح حاليًا "+values.length;
@@ -45,10 +46,11 @@ $("nextRound").addEventListener("click",()=>{
  const pct=(p*100).toFixed(1);
  number.innerHTML=pct+'<small>%</small>';
  status.textContent="الاحتمال التاريخي لنتيجة "+threshold+"x أو أكثر: "+pct+"%";
+ $("autoThreshold").textContent="العتبة التلقائية المختارة من البيانات: "+threshold+"x فأكثر";
  const intervalN=values.length+priorStrength,z=1.96,center=(p+z*z/(2*intervalN))/(1+z*z/intervalN);
  const margin=z*Math.sqrt((p*(1-p)/intervalN)+(z*z/(4*intervalN*intervalN)))/(1+z*z/intervalN);
  const low=Math.max(0,center-margin)*100,high=Math.min(1,center+margin)*100;
- note.textContent="تم الحساب من "+values.length+" جولة ("+source+"). تحقق الشرط في "+wins+" جولة ("+(base*100).toFixed(1)+"% خام). نطاق عدم اليقين التقريبي 95%: "+low.toFixed(1)+"%–"+high.toFixed(1)+"%. أُضيف التقدير لسجل الاختبار؛ أدخل النتيجة الفعلية في المختبر لقياس الدقة. الجولات المستقلة قد لا تتبع هذا المعدل.";
+ note.textContent="تم الحساب من "+values.length+" جولة ("+source+"). اختار البرنامج العتبة الأقرب إلى معدل تاريخي 50% من بين 2x و3x و5x و10x. تحقق الشرط في "+wins+" جولة ("+(base*100).toFixed(1)+"% خام). نطاق عدم اليقين التقريبي 95%: "+low.toFixed(1)+"%–"+high.toFixed(1)+"%. أُضيف التقدير لسجل الاختبار؛ أدخل النتيجة الفعلية في المختبر لقياس الدقة. الجولات المستقلة قد لا تتبع هذا المعدل.";
  recordPrediction({id:Date.now(),time:new Date().toISOString(),threshold,p,actual:null,n:values.length,base,source,method:"smoothed-historical-frequency"});
  btn.disabled=true;btn.innerHTML="✓ تم حساب الاحتمال";setTimeout(()=>{btn.disabled=false;btn.innerHTML="<span>✦</span> الجولة التالية · احسب الاحتمال";},900);
 });
