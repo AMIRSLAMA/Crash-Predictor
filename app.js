@@ -61,6 +61,7 @@ window.addEventListener("message",async event=>{
  const btn=$("nextRound");
  if(btn&&!btn.disabled)btn.click();
 });
+window.postMessage({source:"CRASH_PREDICTOR_PAGE",type:"READY"},location.origin);
 $("saveActualRound").addEventListener("click",()=>{
  const field=$("actualRound"),message=$("actualRoundMessage"),value=Number(field.value);
  if(!Number.isFinite(value)||value<1){message.textContent="اكتب نتيجة صحيحة أكبر من أو تساوي 1.";return;}
