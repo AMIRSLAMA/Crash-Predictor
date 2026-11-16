@@ -57,19 +57,20 @@ $("nextRound").addEventListener("click",async()=>{
   status.textContent="تعذر تحميل سجل النتائج. المتاح حاليًا "+values.length+" نتيجة؛ تأكد من فتح رابط GitHub Pages.";
   number.innerHTML="--<small>%</small>";note.textContent="تعذر الحساب لعدم توفر 30 نتيجة على الأقل.";return;
  }
- const threshold=candidates.map(t=>({t,rate:values.filter(v=>v>=t).length/values.length})).sort((a,b)=>Math.abs(a.rate-.5)-Math.abs(b.rate-.5)||a.t-b.t)[0].t;
- const wins=values.filter(v=>v>=threshold).length,base=wins/values.length;
+ const sample=values.slice(-Math.min(100,values.length));
+ const threshold=candidates.map(t=>({t,rate:sample.filter(v=>v>=t).length/sample.length})).sort((a,b)=>Math.abs(a.rate-.5)-Math.abs(b.rate-.5)||a.t-b.t)[0].t;
+ const wins=sample.filter(v=>v>=threshold).length,base=wins/sample.length;
  // Laplace/Beta smoothing: prevents tiny samples from producing extreme 0% or 100% estimates.
  const priorStrength=20,p=(wins+priorStrength*0.5)/(values.length+priorStrength);
  const pct=(p*100).toFixed(1);
  number.innerHTML=pct+'<small>%</small>';
  status.textContent="الاحتمال التاريخي لنتيجة "+threshold+"x أو أكثر: "+pct+"%";
  $("autoThreshold").textContent="العتبة التلقائية المختارة من البيانات: "+threshold+"x فأكثر";
- const intervalN=values.length+priorStrength,z=1.96,center=(p+z*z/(2*intervalN))/(1+z*z/intervalN);
+ const intervalN=sample.length+priorStrength,z=1.96,center=(p+z*z/(2*intervalN))/(1+z*z/intervalN);
  const margin=z*Math.sqrt((p*(1-p)/intervalN)+(z*z/(4*intervalN*intervalN)))/(1+z*z/intervalN);
  const low=Math.max(0,center-margin)*100,high=Math.min(1,center+margin)*100;
- note.textContent="تم الحساب من "+values.length+" جولة ("+source+"). اختار البرنامج العتبة الأقرب إلى معدل تاريخي 50% من بين 2x و3x و5x و10x. تحقق الشرط في "+wins+" جولة ("+(base*100).toFixed(1)+"% خام). نطاق عدم اليقين التقريبي 95%: "+low.toFixed(1)+"%–"+high.toFixed(1)+"%. أُضيف التقدير لسجل الاختبار؛ أدخل النتيجة الفعلية في المختبر لقياس الدقة. الجولات المستقلة قد لا تتبع هذا المعدل.";
- recordPrediction({id:Date.now(),time:new Date().toISOString(),threshold,p,actual:null,n:values.length,base,source,method:"smoothed-historical-frequency"});
+ note.textContent="تم الحساب من آخر "+sample.length+" جولة من إجمالي "+values.length+" ("+source+"). اختار البرنامج العتبة الأقرب إلى معدل تاريخي 50% من بين 2x و3x و5x و10x. تحقق الشرط في "+wins+" جولة ("+(base*100).toFixed(1)+"% خام). نطاق عدم اليقين التقريبي 95%: "+low.toFixed(1)+"%–"+high.toFixed(1)+"%. أُضيف التقدير لسجل الاختبار؛ أدخل النتيجة الفعلية في المختبر لقياس الدقة. الجولات المستقلة قد لا تتبع هذا المعدل.";
+ recordPrediction({id:Date.now(),time:new Date().toISOString(),threshold,p,actual:null,n:sample.length,total:values.length,base,source,method:"smoothed-historical-frequency"});
  showRolling(values);\n btn.textContent="✓ تم حساب النسبة";
  } catch(error) {
   status.textContent="حصل خطأ أثناء الحساب. أعد تحميل الصفحة وجرب مرة أخرى.";
@@ -97,10 +98,11 @@ renderCollected();
 predictionValues().then(({values})=>{
  if(values.length<30){$("status").textContent="تعذر تحميل سجل النتائج — جرّب تحديث الصفحة.";return;}
  const candidates=[2,3,5,10];
- const threshold=candidates.map(t=>({t,rate:values.filter(v=>v>=t).length/values.length})).sort((a,b)=>Math.abs(a.rate-.5)-Math.abs(b.rate-.5)||a.t-b.t)[0].t;
- const wins=values.filter(v=>v>=threshold).length,p=(wins+10)/(values.length+20);
+ const sample=values.slice(-Math.min(100,values.length));
+ const threshold=candidates.map(t=>({t,rate:sample.filter(v=>v>=t).length/sample.length})).sort((a,b)=>Math.abs(a.rate-.5)-Math.abs(b.rate-.5)||a.t-b.t)[0].t;
+ const wins=sample.filter(v=>v>=threshold).length,p=(wins+10)/(sample.length+20);
  $("multiplier").innerHTML=(p*100).toFixed(1)+"<small>%</small>";
  $("autoThreshold").textContent="العتبة التلقائية: "+threshold+"x فأكثر";
- $("status").textContent="تم تحميل "+values.length+" جولة تاريخية. اضغط الجولة التالية لتسجيل تقدير جديد.";showRolling(values);
+ $("status").textContent="تم تحميل "+values.length+" جولة؛ النسبة محسوبة من آخر "+sample.length+" جولة. أضف نتيجة الجولة الفعلية لتحديثها.";showRolling(values);
 }).catch(()=>{$("status").textContent="تعذر تحميل البيانات. افتح الموقع من GitHub Pages ثم حدّث الصفحة.";});
 })();
