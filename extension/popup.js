@@ -1,13 +1,25 @@
 const status=document.getElementById("status");
+const start=document.getElementById("start");
 const diagnostics=document.createElement("div");
 diagnostics.style.cssText="margin-top:10px;padding-top:9px;border-top:1px solid #444;line-height:1.9;color:#f0c45c;white-space:pre-line";
 status.after(diagnostics);
 async function renderDiagnostics(){
- const data=await chrome.storage.local.get(["collectorDiagnostics","recentRounds","collectorEnabled","gameOrigin"]);
+ const data=await chrome.storage.local.get(["collectorDiagnostics","recentRounds","collectorEnabled","gameOrigin","gameTabId"]);
  const d=data.collectorDiagnostics||{},total=Array.isArray(data.recentRounds)?data.recentRounds.length:0;
+ let tabAlive=false;
+ if(data.gameTabId){try{await chrome.tabs.get(data.gameTabId);tabAlive=true;}catch(_){}}
+ const active=!!data.collectorEnabled&&tabAlive;
+ status.textContent=active
+  ?"الجامع مرتبط ويعمل في الخلفية. لا تحتاج إلى الضغط على ربط مرة أخرى. اترك صفحة اللعبة مفتوحة."
+  :data.collectorEnabled
+   ?"الجامع مفعّل لكن تبويب اللعبة غير موجود. افتح اللعبة واضغط إعادة الربط."
+   :"الجامع غير مرتبط حاليًا. افتح صفحة اللعبة واضغط ربط.";
+ start.textContent=active?"الجامع مرتبط بالفعل":"ربط / إعادة ربط صفحة اللعبة";
+ start.disabled=active;
+ start.style.opacity=active?".55":"1";
  diagnostics.textContent=[
   "تشخيص الالتقاط:",
-  "حالة الجامع: "+(data.collectorEnabled?"مفعّل":"متوقف"),
+  "حالة الجامع: "+(active?"مرتبط ويعمل":data.collectorEnabled?"مفعّل — التبويب غير موجود":"غير مرتبط"),
   "اتصالات WebSocket: "+(d.wsCreated||0)+" · اتصالات مفتوحة: "+(d.wsOpened||0),
   "رسائل WebSocket: "+(d.wsFrames||0)+" · أحداث SignalR: "+(d.wsMessages||0),
   "نتائج جولات ملتقطة: "+(d.roundsCaptured||0)+" · إجمالي محفوظ: "+total,
@@ -20,7 +32,7 @@ async function renderDiagnostics(){
 }
 renderDiagnostics();
 chrome.storage.onChanged.addListener((changes,area)=>{if(area==="local")renderDiagnostics();});
-document.getElementById("start").addEventListener("click",async()=>{
+start.addEventListener("click",async()=>{
  try{
   const [tab]=await chrome.tabs.query({active:true,currentWindow:true});
   if(!tab?.id||!tab.url||!/^https?:/.test(tab.url))throw new Error("افتح صفحة اللعبة في التبويب الحالي أولًا.");
@@ -30,13 +42,14 @@ document.getElementById("start").addEventListener("click",async()=>{
   await chrome.storage.local.set({collectorEnabled:true,gameOrigin:origin,gameTabId:tab.id,collectorDiagnostics:{wsCreated:0,wsOpened:0,wsFrames:0,wsMessages:0,roundsCaptured:0}});
   await chrome.scripting.unregisterContentScripts({ids:["crash-game-hook","crash-game-bridge"]}).catch(()=>{});
   await chrome.scripting.registerContentScripts([
-   {id:"crash-game-hook",matches:[origin+"/*"],js:["game-hook.js"],runAt:"document_start",world:"MAIN",persistAcrossSessions:false},
-   {id:"crash-game-bridge",matches:[origin+"/*"],js:["game-bridge.js"],runAt:"document_start",world:"ISOLATED",persistAcrossSessions:false}
+   {id:"crash-game-hook",matches:[origin+"/*"],js:["game-hook.js"],runAt:"document_start",world:"MAIN",persistAcrossSessions:true},
+   {id:"crash-game-bridge",matches:[origin+"/*"],js:["game-bridge.js"],runAt:"document_start",world:"ISOLATED",persistAcrossSessions:true}
   ]);
-  status.textContent="تم الربط وإعادة تحميل اللعبة. افتح الإضافة مرة أخرى لمتابعة عدادات الاتصال والالتقاط.";
+  status.textContent="تم الربط. جاري إعادة تحميل صفحة اللعبة لبدء الالتقاط من اتصال WebSocket.";
   await chrome.tabs.reload(tab.id);
+  renderDiagnostics();
  }catch(e){status.textContent=e.message||String(e);}
 });
 document.getElementById("stop").addEventListener("click",async()=>{
- try{await chrome.scripting.unregisterContentScripts({ids:["crash-game-hook","crash-game-bridge"]});await chrome.storage.local.set({collectorEnabled:false});status.textContent="تم إيقاف الالتقاط.";}catch(e){status.textContent=e.message||String(e);}
+ try{await chrome.scripting.unregisterContentScripts({ids:["crash-game-hook","crash-game-bridge"]});await chrome.storage.local.set({collectorEnabled:false});renderDiagnostics();}catch(e){status.textContent=e.message||String(e);}
 });
