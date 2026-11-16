@@ -46,7 +46,7 @@
 
 <section class="decoder-panel" id="liveLab" style="margin-top:24px">
  <div class="decoder-heading"><span class="decoder-chip">LIVE TEST</span><div><h2>مختبر الاحتمالات · LIVE VALIDATION</h2><p>تقدير احتمالات تاريخية + تسجيل نتيجة الجولة للتحقق من المعايرة</p></div></div>
- <div class="history-actions" style="flex-wrap:wrap"><label>عتبة النجاح <select id="labThreshold"><option value="2">2x+</option><option value="3">3x+</option><option value="5">5x+</option><option value="10">10x+</option></select></label><button id="labAnalyze">احسب الاحتمالات</button></div>
+ <div class="history-actions" style="flex-wrap:wrap"><span>العتبة تُختار تلقائيًا من سجل النتائج</span><button id="labAnalyze">اختبر الاحتمال التلقائي</button></div>
  <div id="labOutput" class="decoder-summary" style="margin-top:12px">أدخل سجل النتائج في مربع «إدخال سجل النتائج السابقة» بالأعلى ثم اضغط حساب الاحتمالات.</div>
  <div class="history-actions" style="margin-top:12px;align-items:center;flex-wrap:wrap"><label for="labActual">نتيجة الجولة التي ظهرت فعليًا (x)</label><input id="labActual" type="number" min="1" step="0.01" placeholder="مثلاً 1.72" style="max-width:150px"><button id="labSettle">سجّل النتيجة واختبر</button></div>
  <div id="labScore" class="decoder-status"></div><div class="collector-toolbar"><strong>سجل الاختبار المحفوظ على الجهاز</strong><button id="labClear">مسح سجل الاختبار</button></div><div id="labHistory"></div>
