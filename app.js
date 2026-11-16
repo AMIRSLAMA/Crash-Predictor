@@ -33,7 +33,8 @@ function rollingStats(values){
  return windows.map(n=>{const sample=values.slice(-Math.min(n,values.length));const rates=[2,3,5,10].map(t=>({t,p:sample.filter(v=>v>=t).length/sample.length}));const best=rates.sort((a,b)=>Math.abs(a.p-.5)-Math.abs(b.p-.5)||a.t-b.t)[0];return "آخر "+sample.length+" جولة: "+best.t+"x ("+(best.p*100).toFixed(1)+"%)";}).join(" · ");
 }
 function showRolling(values){const el=$("rollingStats");if(el)el.textContent=rollingStats(values);}
-\nfunction recordPrediction(item){
+
+function recordPrediction(item){
  const key="crash-live-lab-v1";let a=[];
  try{const parsed=JSON.parse(localStorage.getItem(key)||"[]");if(Array.isArray(parsed))a=parsed;}catch(_){}
  a.push(item);localStorage.setItem(key,JSON.stringify(a));
@@ -46,6 +47,15 @@ function downloadFile(name,type,content){
 $("toggleHistory").addEventListener("click",()=>{const panel=$("historyPanel"),open=panel.classList.toggle("hidden")===false;$("toggleHistory").setAttribute("aria-expanded",String(open));$("toggleHistory").textContent=open?"− إخفاء سجل النتائج":"＋ إدخال سجل النتائج السابقة";});
 $("sampleHistory").addEventListener("click",()=>{input.value="1.12 1.45 2.08 1.01 3.62 1.78 5.24 1.20 2.31 1.04 8.70 1.66 2.05 1.33 4.10 1.09 12.40 2.70 1.51 1.02";});
 $("saveHistory").addEventListener("click",()=>{const values=CrashAnalytics.parseMultipliers(input.value);if(values.length<3){$("historyMessage").textContent="أدخل 3 نتائج صحيحة على الأقل.";return;}localStorage.setItem("crash-history",input.value);$("historyMessage").textContent="تم حفظ "+values.length+" نتيجة على هذا الجهاز.";});
+$("saveActualRound").addEventListener("click",()=>{
+ const field=$("actualRound"),message=$("actualRoundMessage"),value=Number(field.value);
+ if(!Number.isFinite(value)||value<1){message.textContent="اكتب نتيجة صحيحة أكبر من أو تساوي 1.";return;}
+ const rounds=loadCollected();
+ rounds.push({roundId:String(Date.now()),finalMultiplier:value,sources:["Manual"],updatedAt:new Date().toISOString()});
+ localStorage.setItem(STORAGE_KEY,JSON.stringify(rounds));
+ message.textContent="تم حفظ الجولة "+value.toFixed(2)+"x. يتم الآن تحديث التحليل…";
+ location.reload();
+});
 $("nextRound").addEventListener("click",async()=>{
  const btn=$("nextRound"),status=$("status"),number=$("multiplier"),note=$("subnote");
  btn.disabled=true;btn.textContent="جارٍ حساب النسبة…";
@@ -61,7 +71,7 @@ $("nextRound").addEventListener("click",async()=>{
  const threshold=candidates.map(t=>({t,rate:sample.filter(v=>v>=t).length/sample.length})).sort((a,b)=>Math.abs(a.rate-.5)-Math.abs(b.rate-.5)||a.t-b.t)[0].t;
  const wins=sample.filter(v=>v>=threshold).length,base=wins/sample.length;
  // Laplace/Beta smoothing: prevents tiny samples from producing extreme 0% or 100% estimates.
- const priorStrength=20,p=(wins+priorStrength*0.5)/(values.length+priorStrength);
+ const priorStrength=20,p=(wins+priorStrength*0.5)/(sample.length+priorStrength);
  const pct=(p*100).toFixed(1);
  number.innerHTML=pct+'<small>%</small>';
  status.textContent="الاحتمال التاريخي لنتيجة "+threshold+"x أو أكثر: "+pct+"%";
@@ -71,7 +81,8 @@ $("nextRound").addEventListener("click",async()=>{
  const low=Math.max(0,center-margin)*100,high=Math.min(1,center+margin)*100;
  note.textContent="تم الحساب من آخر "+sample.length+" جولة من إجمالي "+values.length+" ("+source+"). اختار البرنامج العتبة الأقرب إلى معدل تاريخي 50% من بين 2x و3x و5x و10x. تحقق الشرط في "+wins+" جولة ("+(base*100).toFixed(1)+"% خام). نطاق عدم اليقين التقريبي 95%: "+low.toFixed(1)+"%–"+high.toFixed(1)+"%. أُضيف التقدير لسجل الاختبار؛ أدخل النتيجة الفعلية في المختبر لقياس الدقة. الجولات المستقلة قد لا تتبع هذا المعدل.";
  recordPrediction({id:Date.now(),time:new Date().toISOString(),threshold,p,actual:null,n:sample.length,total:values.length,base,source,method:"smoothed-historical-frequency"});
- showRolling(values);\n btn.textContent="✓ تم حساب النسبة";
+ showRolling(values);
+ btn.textContent="✓ تم حساب النسبة";
  } catch(error) {
   status.textContent="حصل خطأ أثناء الحساب. أعد تحميل الصفحة وجرب مرة أخرى.";
   note.textContent=String(error&&error.message||error);
@@ -91,7 +102,8 @@ $("decodeMessages").addEventListener("click",()=>{
 });
 $("clearDecoder").addEventListener("click",()=>{decoderInput.value="";decoderResults.replaceChildren();$("decoderStatus").textContent="تم مسح مربع الرسائل فقط؛ السجل المحفوظ لم يتغير.";});
 $("exportJson").addEventListener("click",()=>{const rounds=loadCollected();if(!rounds.length){$("decoderStatus").textContent="لا توجد جولات لتصديرها حتى الآن.";return;}downloadFile("crash-rounds.json","application/json;charset=utf-8",JSON.stringify(rounds,null,2));});
-$("exportCsv").addEventListener("click",()=>{const rounds=loadCollected();if(!rounds.length){$("decoderStatus").textContent="لا توجد جولات لتصديرها حتى الآن.";return;}const q=v=>'"'+String(v??"").replace(/"/g,'""')+'"';const rows=[["roundId","finalMultiplier","sources","mismatch","crash","resultCrash","resultUser","firstEventTime","lastEventTime"],...rounds.map(r=>[r.roundId,r.finalMultiplier,(r.sources||[]).join("|"),r.mismatch,r.crash,r.resultCrash,r.resultUser,r.firstEventTime,r.lastEventTime])];downloadFile("crash-rounds.csv","text/csv;charset=utf-8","\uFEFF"+rows.map(row=>row.map(q).join(",")).join("\r\n"));});
+$("exportCsv").addEventListener("click",()=>{const rounds=loadCollected();if(!rounds.length){$("decoderStatus").textContent="لا توجد جولات لتصديرها حتى الآن.";return;}const q=v=>'"'+String(v??"").replace(/"/g,'""')+'"';const rows=[["roundId","finalMultiplier","sources","mismatch","crash","resultCrash","resultUser","firstEventTime","lastEventTime"],...rounds.map(r=>[r.roundId,r.finalMultiplier,(r.sources||[]).join("|"),r.mismatch,r.crash,r.resultCrash,r.resultUser,r.firstEventTime,r.lastEventTime])];downloadFile("crash-rounds.csv","text/csv;charset=utf-8","\uFEFF"+rows.map(row=>row.map(q).join(",")).join("\r
+"));});
 $("clearCollected").addEventListener("click",()=>{if(!loadCollected().length){$("decoderStatus").textContent="السجل المحفوظ فارغ بالفعل.";return;}if(!window.confirm("هل تريد مسح كل الجولات المحفوظة على هذا الجهاز؟ لا يمكن التراجع عن ذلك."))return;localStorage.removeItem(STORAGE_KEY);renderCollected();$("decoderStatus").textContent="تم مسح السجل المحفوظ من هذا المتصفح.";});
 renderCollected();
 // اعرض النسبة تلقائيًا عند فتح الصفحة، من دون تسجيل جولة توقع جديدة.
