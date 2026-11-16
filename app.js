@@ -27,7 +27,13 @@ async function predictionValues(){
  if(combined.length>=30)return {values:combined,source:"قاعدة النتائج المرفقة والجولات الجديدة المحفوظة"};
  return {values:manual,source:"السجل الذي أدخلته يدويًا"};
 }
-function recordPrediction(item){
+
+function rollingStats(values){
+ const windows=[100,300,500];
+ return windows.map(n=>{const sample=values.slice(-Math.min(n,values.length));const rates=[2,3,5,10].map(t=>({t,p:sample.filter(v=>v>=t).length/sample.length}));const best=rates.sort((a,b)=>Math.abs(a.p-.5)-Math.abs(b.p-.5)||a.t-b.t)[0];return "آخر "+sample.length+" جولة: "+best.t+"x ("+(best.p*100).toFixed(1)+"%)";}).join(" · ");
+}
+function showRolling(values){const el=$("rollingStats");if(el)el.textContent=rollingStats(values);}
+\nfunction recordPrediction(item){
  const key="crash-live-lab-v1";let a=[];
  try{const parsed=JSON.parse(localStorage.getItem(key)||"[]");if(Array.isArray(parsed))a=parsed;}catch(_){}
  a.push(item);localStorage.setItem(key,JSON.stringify(a));
@@ -64,7 +70,7 @@ $("nextRound").addEventListener("click",async()=>{
  const low=Math.max(0,center-margin)*100,high=Math.min(1,center+margin)*100;
  note.textContent="تم الحساب من "+values.length+" جولة ("+source+"). اختار البرنامج العتبة الأقرب إلى معدل تاريخي 50% من بين 2x و3x و5x و10x. تحقق الشرط في "+wins+" جولة ("+(base*100).toFixed(1)+"% خام). نطاق عدم اليقين التقريبي 95%: "+low.toFixed(1)+"%–"+high.toFixed(1)+"%. أُضيف التقدير لسجل الاختبار؛ أدخل النتيجة الفعلية في المختبر لقياس الدقة. الجولات المستقلة قد لا تتبع هذا المعدل.";
  recordPrediction({id:Date.now(),time:new Date().toISOString(),threshold,p,actual:null,n:values.length,base,source,method:"smoothed-historical-frequency"});
- btn.textContent="✓ تم حساب النسبة";
+ showRolling(values);\n btn.textContent="✓ تم حساب النسبة";
  } catch(error) {
   status.textContent="حصل خطأ أثناء الحساب. أعد تحميل الصفحة وجرب مرة أخرى.";
   note.textContent=String(error&&error.message||error);
@@ -95,6 +101,6 @@ predictionValues().then(({values})=>{
  const wins=values.filter(v=>v>=threshold).length,p=(wins+10)/(values.length+20);
  $("multiplier").innerHTML=(p*100).toFixed(1)+"<small>%</small>";
  $("autoThreshold").textContent="العتبة التلقائية: "+threshold+"x فأكثر";
- $("status").textContent="تم تحميل "+values.length+" جولة تاريخية. اضغط الجولة التالية لتسجيل تقدير جديد.";
+ $("status").textContent="تم تحميل "+values.length+" جولة تاريخية. اضغط الجولة التالية لتسجيل تقدير جديد.";showRolling(values);
 }).catch(()=>{$("status").textContent="تعذر تحميل البيانات. افتح الموقع من GitHub Pages ثم حدّث الصفحة.";});
 })();
