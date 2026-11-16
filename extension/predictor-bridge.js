@@ -2,12 +2,16 @@
  if (window.__crashPredictorBridgeInstalled) return;
  window.__crashPredictorBridgeInstalled = true;
  const pageOrigin = location.origin;
+ let sending = false;
  const send = async () => {
+  if (sending) return;
+  sending = true;
   try {
    const { recentRounds = [], predictorBridge = {} } = await chrome.storage.local.get(["recentRounds", "predictorBridge"]);
    let sent = 0;
-   for (const round of recentRounds) {
-    window.postMessage({ source: "CRASH_LIVE_EXTENSION", type: "ROUND", round }, pageOrigin);
+   for (const round of (Array.isArray(recentRounds) ? recentRounds : [])) {
+    // CustomEvent is shared with the page world and is already handled by app.js.
+    window.dispatchEvent(new CustomEvent("crash-live-round", { detail: JSON.stringify(round) }));
     sent++;
    }
    await chrome.storage.local.set({
@@ -15,8 +19,9 @@
      ...predictorBridge,
      lastSendAt: new Date().toISOString(),
      sent,
-     total: Array.isArray(recentRounds) ? recentRounds.length : 0,
-     pageUrl: location.href
+     total: sent,
+     pageUrl: location.href,
+     transport: "CustomEvent"
     }
    });
   } catch (error) {
@@ -24,6 +29,8 @@
     const { predictorBridge = {} } = await chrome.storage.local.get("predictorBridge");
     await chrome.storage.local.set({ predictorBridge: { ...predictorBridge, lastError: String(error), pageUrl: location.href } });
    } catch (_) {}
+  } finally {
+   sending = false;
   }
  };
  window.addEventListener("message", async event => {
@@ -47,15 +54,11 @@
  });
  window.addEventListener("message", event => {
   const d = event.data;
-  if (event.source === window && event.origin === pageOrigin && d?.source === "CRASH_PREDICTOR_PAGE" && d.type === "READY") {
-   chrome.storage.local.get("predictorBridge").then(({ predictorBridge = {} }) =>
-    chrome.storage.local.set({ predictorBridge: { ...predictorBridge, pageReady: true, lastReadyAt: new Date().toISOString(), pageUrl: location.href } })
-   ).then(send).catch(() => {});
-  }
+  if (event.source === window && event.origin === pageOrigin && d?.source === "CRASH_PREDICTOR_PAGE" && d.type === "READY") send();
  });
  chrome.storage.onChanged.addListener((changes, area) => {
   if (area === "local" && changes.recentRounds) send();
  });
  send();
- setTimeout(send, 1500);
+ setTimeout(send, 1000);
 })();
