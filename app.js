@@ -8,7 +8,7 @@ const importedHistoryPromise=fetch(new URL("./data/crash-rounds.json",document.b
  .catch(()=>{importedHistory=[];return importedHistory;});
 input.value=localStorage.getItem("crash-history")||"";
 function loadCollected(){try{const data=JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]");return Array.isArray(data)?data:[];}catch(_){return [];}}
-function saveCollected(rounds){localStorage.setItem(STORAGE_KEY,JSON.stringify(rounds));renderCollected();}
+function saveCollected(rounds){localStorage.setItem(STORAGE_KEY,JSON.stringify(rounds));renderCollected();renderLiveRounds();}
 function renderCollected(){
  const rounds=loadCollected(),count=$("collectorCount"),list=$("collectorSaved");
  count.textContent="الجولات المحفوظة: "+rounds.length;list.replaceChildren();
@@ -16,6 +16,20 @@ function renderCollected(){
  const recent=rounds.slice(-10).reverse();
  if(!recent.length){const p=document.createElement("p");p.textContent="لسه مفيش نتائج محفوظة. الصق أول رسائل OnCrash أو OnResult واضغط «حلّل واجمع النتائج».";list.appendChild(p);return;}
  const ol=document.createElement("ol");recent.forEach(r=>{const li=document.createElement("li");li.textContent="جولة "+r.roundId+" — "+Number(r.finalMultiplier).toFixed(2)+"x · "+(r.sources||[]).join(" + ")+(r.mismatch?" · اختلاف بين المصدرين":"");ol.appendChild(li);});list.appendChild(ol);
+}
+function renderLiveRounds(){
+ const rounds=loadCollected().filter(r=>Number.isFinite(Number(r.finalMultiplier))&&Number(r.finalMultiplier)>=1);
+ const latest=rounds[rounds.length-1],valueEl=$("latestRoundValue"),metaEl=$("latestRoundMeta"),list=$("recentRoundsList"),count=$("liveRoundsCount");
+ if(!valueEl||!metaEl||!list)return;
+ list.replaceChildren();
+ count.textContent="إجمالي النتائج الفعلية المحفوظة: "+rounds.length;
+ if(!latest){valueEl.textContent="بانتظار أول نتيجة";metaEl.textContent="اترك اللعبة مفتوحة حتى تنتهي الجولة الأولى.";return;}
+ valueEl.textContent=Number(latest.finalMultiplier).toFixed(2)+"x";
+ metaEl.textContent="رقم الجولة: "+latest.roundId+" · "+((latest.sources||[]).join(" + ")||"مصدر مباشر");
+ rounds.slice(-10).reverse().forEach(r=>{
+  const item=document.createElement("li"),strong=document.createElement("strong"),small=document.createElement("span");
+  strong.textContent=Number(r.finalMultiplier).toFixed(2)+"x";small.textContent="جولة "+r.roundId;item.append(strong,small);list.appendChild(item);
+ });
 }
 async function predictionValues(){
  await importedHistoryPromise;
@@ -71,7 +85,7 @@ async function refreshPredictionFromHistory(){
   const wins=sample.filter(v=>v>=threshold).length;
   const p=(wins+10)/(sample.length+20);
   number.innerHTML=(p*100).toFixed(1)+"<small>%</small>";
-  thresholdEl.textContent="الهدف الإحصائي: "+threshold+"x فأكثر";
+  thresholdEl.textContent="احتمال تاريخي لتجاوز "+threshold+"x — وليس المضاعف المتوقع";
   if(status)status.textContent="تم تحديث المؤشر من "+values.length+" جولة محفوظة.";
   showRolling(values);
   if(btn&&!btn.disabled)btn.textContent="تحديث المؤشر";
@@ -114,6 +128,7 @@ window.addEventListener("message",event=>{
  }
 });
 window.postMessage({source:"CRASH_PREDICTOR_PAGE",type:"READY"},location.origin);
+renderLiveRounds();
 $("saveActualRound").addEventListener("click",()=>{
  const field=$("actualRound"),message=$("actualRoundMessage"),value=Number(field.value);
  if(!Number.isFinite(value)||value<1){message.textContent="اكتب نتيجة صحيحة أكبر من أو تساوي 1.";return;}
@@ -141,8 +156,8 @@ $("nextRound").addEventListener("click",async()=>{
  const priorStrength=20,p=(wins+priorStrength*0.5)/(sample.length+priorStrength);
  const pct=(p*100).toFixed(1);
  number.innerHTML=pct+'<small>%</small>';
- status.textContent="الاحتمال التاريخي لنتيجة "+threshold+"x أو أكثر: "+pct+"%";
- $("autoThreshold").textContent="العتبة التلقائية المختارة من البيانات: "+threshold+"x فأكثر";
+ status.textContent="تاريخيًا، نسبة الجولات التي تجاوزت "+threshold+"x: "+pct+"%";
+ $("autoThreshold").textContent="احتمال تاريخي لتجاوز "+threshold+"x — وليس المضاعف المتوقع";
  const intervalN=sample.length+priorStrength,z=1.96,center=(p+z*z/(2*intervalN))/(1+z*z/intervalN);
  const margin=z*Math.sqrt((p*(1-p)/intervalN)+(z*z/(4*intervalN*intervalN)))/(1+z*z/intervalN);
  const low=Math.max(0,center-margin)*100,high=Math.min(1,center+margin)*100;
