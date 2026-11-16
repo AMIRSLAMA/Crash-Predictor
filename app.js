@@ -51,16 +51,20 @@ $("saveHistory").addEventListener("click",()=>{const values=CrashAnalytics.parse
 // استقبال الجولات المكتملة من إضافة Chrome وربطها بالسجل المحلي.
 function receiveLiveRound(round){
  const value=Number(round?.finalMultiplier);
- if(!round?.roundId||!Number.isFinite(value)||value<1||value>100000)return;
+ if(!round?.roundId||!Number.isFinite(value)||value<1||value>100000)return false;
  const merged=CrashCollector.mergeCollections(loadCollected(),[round]);
  saveCollected(merged.rounds);
  const message=$("actualRoundMessage");
  if(message)message.textContent="وصلت نتيجة مباشرة: الجولة "+round.roundId+" — "+value.toFixed(2)+"x. إجمالي الجولات المحفوظة: "+merged.rounds.length;
  const btn=$("nextRound");
  if(btn&&!btn.disabled)btn.click();
+ return true;
 }
 window.addEventListener("crash-live-round",event=>{
- try{receiveLiveRound(JSON.parse(String(event.detail||"{}")));}catch(_){}
+ try{
+  const round=JSON.parse(String(event.detail||"{}"));
+  if(receiveLiveRound(round))window.postMessage({source:"CRASH_PREDICTOR_PAGE",type:"ROUND_RECEIVED",roundId:String(round.roundId)},location.origin);
+ }catch(_){}
 });
 window.addEventListener("message",event=>{
  const d=event.data;
