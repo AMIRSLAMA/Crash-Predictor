@@ -1,8 +1,44 @@
 (() => {
  if (window.__crashLiveBridgeInstalled) return;
  window.__crashLiveBridgeInstalled = true;
- chrome.storage.local.get("collectorDiagnostics").then(({collectorDiagnostics={}})=>chrome.storage.local.set({collectorDiagnostics:{...collectorDiagnostics,pageUrl:location.href,frameUrl:location.href,iframeUrls:[...document.querySelectorAll("iframe")].map(x=>x.src||"(iframe بلا src)").filter(Boolean)}})).catch(()=>{});
+ const safeUrl = value => {
+  try { const u = new URL(value, location.href); return u.origin + u.pathname; }
+  catch (_) { return "(رابط غير صالح)"; }
+ };
+ const safePage = safeUrl(location.href);
+ chrome.storage.local.get("collectorDiagnostics").then(({collectorDiagnostics={}})=>chrome.storage.local.set({collectorDiagnostics:{...collectorDiagnostics,pageUrl:safePage,frameUrl:safePage,iframeUrls:[...document.querySelectorAll("iframe")].map(x=>safeUrl(x.src||location.href))}})).catch(()=>{});
  const valid = v => {const n=Number(v);return Number.isFinite(n)&&n>=1&&n<=100000?n:null;};
+ const safeNumericKeys = new Set([
+  "l","ln","s","t","kx","p","f","multiplier","crash","crashCoefficient",
+  "crash_coefficient","finalMultiplier","final_multiplier","coefficient",
+  "crashPoint","crash_point","result","resultMultiplier"
+ ]);
+ let sampleQueue = Promise.resolve();
+ function saveEventSample(target, payload) {
+  const o = payload && typeof payload === "object" && !Array.isArray(payload) ? payload : {};
+  const numericFields = {};
+  for (const key of safeNumericKeys) {
+   if (!Object.prototype.hasOwnProperty.call(o,key)) continue;
+   const value = o[key];
+   if ((typeof value === "number" || (typeof value === "string" && value.trim() !== "")) && Number.isFinite(Number(value))) {
+    numericFields[key] = Number(value);
+   }
+  }
+  const sample = {
+   at: new Date().toISOString(),
+   target,
+   roundId: o.l == null ? null : String(o.l),
+   stageState: Number.isFinite(Number(o.s)) ? Number(o.s) : null,
+   keys: Object.keys(o).slice(0,40),
+   numericFields
+  };
+  sampleQueue = sampleQueue.then(async () => {
+   const {collectorEventSamples=[]} = await chrome.storage.local.get("collectorEventSamples");
+   const rows = Array.isArray(collectorEventSamples) ? collectorEventSamples : [];
+   rows.push(sample);
+   await chrome.storage.local.set({collectorEventSamples:rows.slice(-250)});
+  }).catch(()=>{});
+ }
  window.addEventListener("message", async event => {
   const d=event.data;
   if(event.source!==window||event.origin!==location.origin||!d||d.source!=="ROHNY_CRASH_COLLECTOR")return;
@@ -24,6 +60,7 @@
   const a=Array.isArray(d.args)?d.args:[],o=a[0]&&typeof a[0]==="object"?a[0]:{};
   const target=String(d.target||"");
   diag.wsMessages=(diag.wsMessages||0)+1;diag.lastTarget=target;diag.lastSeenAt=new Date().toISOString();
+  saveEventSample(target,o);
   const isCrash=target==="OnCrash",isResult=target==="OnResult";
   if(!isCrash&&!isResult){await chrome.storage.local.set({collectorDiagnostics:diag});return;}
   const roundId=o.l??o.roundId??o.round_id;

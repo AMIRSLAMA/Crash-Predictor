@@ -11,7 +11,7 @@ async function unregisterGameScripts(){
  if(ids.length)await chrome.scripting.unregisterContentScripts({ids});
 }
 async function renderDiagnostics(){
- const data=await chrome.storage.local.get(["collectorDiagnostics","recentRounds","collectorEnabled","gameOrigin","gameTabId","predictorBridge"]);
+ const data=await chrome.storage.local.get(["collectorDiagnostics","collectorEventSamples","recentRounds","collectorEnabled","gameOrigin","gameTabId","predictorBridge"]);
  const d=data.collectorDiagnostics||{},total=Array.isArray(data.recentRounds)?data.recentRounds.length:0;
  let tabAlive=false;
  if(data.gameTabId){try{await chrome.tabs.get(data.gameTabId);tabAlive=true;}catch(_){}}
@@ -37,7 +37,13 @@ async function renderDiagnostics(){
   d.lastError?"خطأ: "+d.lastError:"",
   "نطاق اللعبة: "+(data.gameOrigin||"غير محدد"),
   "عنوان الصفحة المحقونة: "+(d.pageUrl||"لم يتم حقن الجسر"),
-  "إطارات اللعبة داخل الصفحة: "+((d.iframeUrls||[]).join(" | ")||"لا توجد إطارات ظاهرة")
+  "إطارات اللعبة داخل الصفحة: "+((d.iframeUrls||[]).join(" | ")||"لا توجد إطارات ظاهرة"),
+  "",
+  "آخر عينات أحداث SignalR (بيانات خام غير محفوظة):",
+  ...(Array.isArray(data.collectorEventSamples)?data.collectorEventSamples.slice(-8).reverse().map(s=>{
+   const fields=Object.keys(s.numericFields||{}).length?JSON.stringify(s.numericFields):"لا توجد قيم رقمية مرشحة";
+   return (s.at||"") + " · " + (s.target||"") + " · الجولة " + (s.roundId??"-") + " · الحالة " + (s.stageState??"-") + " · " + fields + " · المفاتيح: " + (s.keys||[]).join(",");
+  }):[])
  ].filter(Boolean).join("\n");
 }
 renderDiagnostics();
