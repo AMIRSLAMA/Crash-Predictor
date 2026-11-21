@@ -97,7 +97,8 @@ async function refreshPredictionFromHistory(){
   number.innerHTML=(p2.probability*100).toFixed(1)+"<small>%</small>";
   thresholdEl.textContent="3x: "+(p3.probability*100).toFixed(1)+"% · 5x: "+(p5.probability*100).toFixed(1)+"% · فاصل 95% لـ2x: "+(p2.low*100).toFixed(1)+"–"+(p2.high*100).toFixed(1)+"% · n="+forecast.sampleSize;
   if(status)status.textContent="تم تحديث الاحتمالات من النتائج المسجلة.";
-  if(note)note.textContent="3x: "+(p3.probability*100).toFixed(1)+"% · 5x: "+(p5.probability*100).toFixed(1)+"% · فاصل ثقة 95% لاحتمال 2x+: "+(p2.low*100).toFixed(1)+"%–"+(p2.high*100).toFixed(1)+"%. المصدر: "+source+". احتمالات تاريخية وصفية وليست ضمانًا للجولة القادمة.";\n  showRolling(forecast);
+  if(note)note.textContent="3x: "+(p3.probability*100).toFixed(1)+"% · 5x: "+(p5.probability*100).toFixed(1)+"% · فاصل ثقة 95% لاحتمال 2x+: "+(p2.low*100).toFixed(1)+"%–"+(p2.high*100).toFixed(1)+"%. المصدر: "+source+". احتمالات تاريخية وصفية وليست ضمانًا للجولة القادمة.";
+  showRolling(forecast);
   const collected=loadCollected();
   localStorage.setItem(PENDING_PREDICTION_KEY,JSON.stringify({probabilities:forecast.probabilities,basedOnRoundId,capturedAt:new Date().toISOString(),sampleSize:forecast.sampleSize}));
   if(btn&&!btn.disabled)btn.textContent="تحديث الاحتمالات";
