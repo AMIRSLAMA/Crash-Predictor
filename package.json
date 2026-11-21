@@ -5,6 +5,7 @@
   "description": "Arabic historical Crash multiplier analytics",
   "scripts": {
     "test": "node --test",
-    "analyze": "node scripts/analyze-history.js"
+    "analyze": "node scripts/analyze-history.js",
+    "analyze:patterns": "node scripts/analyze-patterns.js"
   }
 }
