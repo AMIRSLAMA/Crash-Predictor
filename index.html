@@ -84,6 +84,15 @@ body{min-height:100svh;overflow-x:hidden}
  <div id="latestRoundValue">بانتظار أول نتيجة</div>
  <div id="latestRoundMeta">اترك اللعبة مفتوحة حتى تنتهي الجولة الأولى.</div>
  <div id="comparisonPanel"><h3>مقارنة المؤشر بالنتائج الفعلية</h3><div id="latestComparison">في انتظار أول جولة تكتمل بعد حفظ مؤشرها المسبق.</div></div>
+ <div id="historyAnalysis" aria-live="polite">
+  <h3>معدلات السجل التاريخي</h3>
+  <p id="analysisSample">جارٍ تحليل سجل النتائج…</p>
+  <div id="thresholdRates"></div>
+  <h3>اختبار زمني خارج عينة التدريب</h3>
+  <p id="backtestMeta"></p>
+  <div id="backtestRates"></div>
+  <p class="analysis-warning">هذه تكرارات تاريخية وفحص رجعي، وليست كشفًا لنتيجة الجولة القادمة أو توصية مراهنة.</p>
+ </div>
  <div class="live-results-subtitle">آخر 10 جولات مسجلة</div>
  <ol id="recentRoundsList"></ol>
  <div id="liveRoundsCount">إجمالي النتائج الفعلية المحفوظة: 0</div>
@@ -95,5 +104,5 @@ body{min-height:100svh;overflow-x:hidden}
 </main>
 <footer hidden><span class="crown">♛</span><strong>Eng Amir Salama</strong><small>DEVELOPER</small></footer>
 <div class="disclaimer" hidden>مؤشر إحصائي تجريبي وليس توقعًا مؤكدًا.</div>
-<script src="analytics.js?v=20261116-9"></script><script src="decoder.js?v=20261116-9"></script><script src="collector.js?v=20261116-9"></script><script src="app.js?v=20261116-15"></script><script src="live-lab.js?v=20261116-9"></script>
+<script src="analytics.js?v=20261121-1"></script><script src="decoder.js?v=20261116-9"></script><script src="collector.js?v=20261116-9"></script><script src="app.js?v=20261121-1"></script><script src="live-lab.js?v=20261116-9"></script>
 </body></html>
