@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CRASH FLIGHT</title>
+<style>
+:root{color-scheme:dark;font-family:Segoe UI,Tahoma,sans-serif;background:#070b14;color:#edf4ff}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% -15%,#18365c 0,transparent 55%),#070b14}
+header{padding:22px 28px;border-bottom:1px solid #22324a;display:flex;align-items:center;justify-content:space-between}
+h1{margin:0;letter-spacing:3px;font-size:26px;color:#e8c66a}small,.muted{color:#91a4bd}
+main{padding:24px;max-width:1200px;margin:auto}.hero{border:1px solid #29415f;border-radius:18px;background:linear-gradient(120deg,#101e32,#0b1220);padding:26px;display:flex;align-items:center;justify-content:space-between;min-height:190px;overflow:hidden}
+.plane{font-size:82px;filter:drop-shadow(0 0 18px #65baff);animation:float 2.8s ease-in-out infinite}@keyframes float{50%{transform:translateY(-10px) translateX(-8px)}}
+.hero h2{margin:0 0 8px;font-size:24px}.hero p{color:#a8bad0;margin:0;max-width:600px;line-height:1.8}
+button{border:0;border-radius:10px;padding:12px 18px;background:#e8c66a;color:#101522;font-weight:700;cursor:pointer}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:18px 0}.stat,.panel{background:#0e1726;border:1px solid #20334c;border-radius:14px;padding:18px}
+.stat span{display:block;color:#91a4bd;font-size:13px}.stat strong{display:block;font-size:25px;margin-top:8px;color:#f5d77e;direction:ltr;text-align:right}
+.row{display:flex;gap:16px}.panel{flex:1;min-width:0}.panel h3{margin:0 0 14px}.status{color:#75d6a0}.warning{color:#f0c66c;line-height:1.8}
+table{width:100%;border-collapse:collapse}th,td{text-align:right;padding:11px;border-bottom:1px solid #20334c}th{color:#91a4bd;font-size:13px}
+#planeState{font-size:19px;color:#f5d77e}footer{padding:20px 28px;color:#8295ad;font-size:12px;line-height:1.8}
+@media(max-width:800px){.stats{grid-template-columns:repeat(2,1fr)}.row{flex-direction:column}.hero{gap:12px}.plane{font-size:55px}}
+</style>
+</head>
+<body>
+<header><div><h1>✈ CRASH FLIGHT</h1><small>STANDALONE DESKTOP MONITOR</small></div><button id="openGame">فتح نافذة اللعبة</button></header>
+<main>
+<section class="hero"><div><h2>مراقبة الرحلة المباشرة</h2><p>البرنامج يراقب أحداث WebSocket داخل نافذة اللعبة المدمجة، ويسجل أحداث بداية الجولة والانفجار عند وصولها.</p><div id="planeState">الطيارة على أرض المطار · في انتظار الجولة</div></div><div class="plane">✈️</div></section>
+<section class="stats">
+<div class="stat"><span>اتصالات WebSocket</span><strong id="connections">0</strong></div>
+<div class="stat"><span>إطارات مستلمة</span><strong id="frames">0</strong></div>
+<div class="stat"><span>أحداث SignalR</span><strong id="events">0</strong></div>
+<div class="stat"><span>جولات مسجلة</span><strong id="saved">0</strong></div>
+</section>
+<section class="row">
+<div class="panel"><h3>حالة الجولة الحالية</h3><p id="roundState" class="status">في انتظار بيانات اللعبة…</p><p id="lastEvent" class="muted">آخر حدث: لا يوجد</p><p id="lastActivity" class="muted">آخر نشاط: —</p></div>
+<div class="panel"><h3>مؤشر الرحلة</h3><p class="warning">البرنامج لا يستطيع معرفة المضاعف النهائي قبل إعلانه. أي إنذار مبكر لن يُفعّل إلا إذا اكتشفنا إشارة تصل قبل الانفجار واختبرناها على جولات مستقلة.</p></div>
+</section>
+<section class="panel" style="margin-top:16px"><h3>سجل الانفجارات المستلمة</h3><table><thead><tr><th>رقم الجولة</th><th>المضاعف المعلن</th><th>وقت الاستلام</th></tr></thead><tbody id="rounds"><tr><td colspan="3" class="muted">لا توجد جولات مسجلة بعد</td></tr></tbody></table></section>
+</main>
+<footer>الخصوصية: لا يحفظ البرنامج رسائل الشبكة الخام أو كلمات المرور أو ملفات تعريف الارتباط. يحفظ فقط رقم الجولة والمضاعف ووقت الحدث في ذاكرة الجلسة. تسجيل النتائج لا يعني التنبؤ بالنتيجة.</footer>
+<script src="renderer.js"></script>
+</body></html>
