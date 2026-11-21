@@ -1,0 +1,22 @@
+{
+  "name": "crash-flight",
+  "version": "0.1.0",
+  "description": "Standalone desktop companion for observing public game round events",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test",
+    "build:win": "electron-builder --win portable"
+  },
+  "build": {
+    "appId": "com.amirslama.crashflight",
+    "productName": "CRASH FLIGHT",
+    "directories": { "output": "dist" },
+    "files": ["main.js", "preload.js", "index.html", "renderer.js", "signalr-parser.js", "package.json"],
+    "win": { "target": ["portable"] }
+  },
+  "devDependencies": {
+    "electron": "^33.2.1",
+    "electron-builder": "^25.1.8"
+  }
+}
