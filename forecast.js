@@ -42,7 +42,21 @@
     });
     return {count:a.length,trainCount:train.length,testCount:test.length,results};
   }
-  function recentTrend(values,windows=[30,100],thresholds=[2,3,5]){\n    const a=clean(values);\n    return windows.map(window=>{\n      const current=a.slice(-window);\n      const previous=a.slice(-2*window,-window);\n      const rates=thresholds.map(threshold=>{\n        const currentRate=current.length?current.filter(v=>v>=threshold).length/current.length:null;\n        const previousRate=previous.length===window?previous.filter(v=>v>=threshold).length/previous.length:null;\n        const delta=currentRate!==null&&previousRate!==null?currentRate-previousRate:null;\n        return {threshold,currentCount:current.length,currentRate,previousCount:previous.length,previousRate,delta,direction:delta===null?"insufficient":delta>0.03?"up":delta< -0.03?"down":"flat"};\n      });\n      return {window,currentCount:current.length,previousCount:previous.length,rates};\n    });\n  }\n  function forecastNext(values,thresholds=DEFAULT_THRESHOLDS){
+  function recentTrend(values,windows=[30,100],thresholds=[2,3,5]){
+    const a=clean(values);
+    return windows.map(window=>{
+      const current=a.slice(-window);
+      const previous=a.slice(-2*window,-window);
+      const rates=thresholds.map(threshold=>{
+        const currentRate=current.length?current.filter(v=>v>=threshold).length/current.length:null;
+        const previousRate=previous.length===window?previous.filter(v=>v>=threshold).length/previous.length:null;
+        const delta=currentRate!==null&&previousRate!==null?currentRate-previousRate:null;
+        return {threshold,currentCount:current.length,currentRate,previousCount:previous.length,previousRate,delta,direction:delta===null?"insufficient":delta>0.03?"up":delta< -0.03?"down":"flat"};
+      });
+      return {window,currentCount:current.length,previousCount:previous.length,rates};
+    });
+  }
+  function forecastNext(values,thresholds=DEFAULT_THRESHOLDS){
     const a=clean(values);
     return {sampleSize:a.length,probabilities:probabilities(a,thresholds),method:"historical-frequency",warning:"احتمالات وصفية من النتائج السابقة وليست كشفًا أو ضمانًا لنتيجة الجولة القادمة."};
   }
