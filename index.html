@@ -87,6 +87,7 @@ body{min-height:100svh;overflow-x:hidden}
  <div class="live-results-subtitle">آخر 10 جولات مسجلة</div>
  <ol id="recentRoundsList"></ol>
  <div id="liveRoundsCount">إجمالي النتائج الفعلية المحفوظة: 0</div>
+ <button id="exportLiveRounds" type="button" style="margin-top:12px;padding:10px 16px;border:1px solid #d8a638;border-radius:9px;background:#d8a638;color:#111;font-weight:800;cursor:pointer">تصدير الجولات الحية JSON</button>
 </section>
 <p class="subnote" id="subnote" hidden>النسبة تقدير إحصائي من النتائج المسجلة، وليست ضمانًا لنتيجة الجولة القادمة.</p><p id="rollingStats" hidden aria-live="polite"></p><div class="round-entry" hidden><label for="actualRound">نتيجة الجولة الفعلية (مثال 2.35)</label><input id="actualRound" type="number" min="1" step="0.01" inputmode="decimal" placeholder="اكتب المضاعف بعد انتهاء الجولة"><button id="saveActualRound" type="button">حفظ النتيجة وتحديث التحليل</button><small id="actualRoundMessage">لا تتغير الإحصائية إلا بعد إدخال نتيجة فعلية أو استيرادها من سجل اللعبة.</small></div>
 <section class="history-drawer" hidden><button id="toggleHistory"></button><div id="historyPanel"><textarea id="historyInput"></textarea><button id="sampleHistory"></button><button id="saveHistory"></button><span id="historyMessage"></span></div></section>
@@ -96,4 +97,5 @@ body{min-height:100svh;overflow-x:hidden}
 <footer hidden><span class="crown">♛</span><strong>Eng Amir Salama</strong><small>DEVELOPER</small></footer>
 <div class="disclaimer" hidden>مؤشر إحصائي تجريبي وليس توقعًا مؤكدًا.</div>
 <script src="analytics.js?v=20261116-9"></script><script src="forecast.js?v=20261121-1"></script><script src="decoder.js?v=20261116-9"></script><script src="collector.js?v=20261116-9"></script><script src="app.js?v=20261116-15"></script><script src="live-lab.js?v=20261116-9"></script>
+<script src="live-export.js?v=20261121-1"></script>
 </body></html>
