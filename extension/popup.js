@@ -82,3 +82,24 @@ document.getElementById("connectPredictor").addEventListener("click",async()=>{
   renderDiagnostics();
  }catch(e){status.textContent=e.message||String(e);}
 });
+
+// Export the authoritative round archive from extension storage, not page localStorage.
+document.getElementById("exportRounds").addEventListener("click",async()=>{
+ try{
+  const {recentRounds=[]}=await chrome.storage.local.get("recentRounds");
+  const rows=(Array.isArray(recentRounds)?recentRounds:[]).map(r=>({
+   roundId:String(r.roundId??""),
+   multiplier:Number(r.crash??r.resultCrash??r.finalMultiplier),
+   timestamp:r.lastEventTime??r.updatedAt??r.firstEventTime??null,
+   sources:Array.isArray(r.sources)?r.sources:[]
+  })).filter(r=>r.roundId&&Number.isFinite(r.multiplier)&&r.multiplier>=1)
+   .sort((a,b)=>{const x=Number(a.roundId),y=Number(b.roundId);return Number.isFinite(x)&&Number.isFinite(y)?x-y:a.roundId.localeCompare(b.roundId);});
+  if(!rows.length)throw new Error("لا توجد جولات محفوظة داخل الإضافة.");
+  const blob=new Blob([JSON.stringify(rows,null,2)],{type:"application/json;charset=utf-8"});
+  const url=URL.createObjectURL(blob),a=document.createElement("a");
+  a.href=url;a.download="crash-live-rounds.json";document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1500);
+  actionMessage="تم تصدير "+rows.length+" جولة من أرشيف الإضافة إلى مجلد Downloads باسم crash-live-rounds.json.";
+  status.textContent=actionMessage;
+ }catch(e){status.textContent="تعذر التصدير: "+(e.message||String(e));}
+});
