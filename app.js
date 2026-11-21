@@ -10,7 +10,7 @@ input.value=localStorage.getItem("crash-history")||"";
 function loadCollected(){try{const data=JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]");return Array.isArray(data)?data:[];}catch(_){return [];}}
 function saveCollected(rounds){localStorage.setItem(STORAGE_KEY,JSON.stringify(rounds));renderCollected();renderLiveRounds();}
 function loadPredictionLog(){try{const data=JSON.parse(localStorage.getItem(PREDICTION_LOG_KEY)||"[]");return Array.isArray(data)?data:[];}catch(_){return [];}}
-function renderPredictionComparisons(){const el=$("latestComparison");if(!el)return;const rows=loadPredictionLog().slice(-5).reverse();el.replaceChildren();if(!rows.length){el.textContent="ستظهر المقارنة بعد تسجيل أول نتيجة جديدة بعد حفظ المؤشر.";return;}rows.forEach(r=>{const item=document.createElement("div"),head=document.createElement("strong"),detail=document.createElement("span");item.className="prediction-comparison-row";head.textContent="الجولة "+r.roundId+" · المؤشر "+Number(r.predictedMultiplier).toFixed(2)+"x مقابل الفعلي "+Number(r.actualMultiplier).toFixed(2)+"x";detail.textContent="الفرق المطلق: "+Number(r.absoluteError).toFixed(2)+"x · الفرق النسبي: "+Number(r.relativeErrorPct).toFixed(1)+"%";item.append(head,detail);el.appendChild(item);});}
+function renderPredictionComparisons(){const el=$("latestComparison");if(!el)return;const rows=loadPredictionLog().slice(-5).reverse();el.replaceChildren();if(!rows.length){el.textContent="ستظهر مقارنة احتمالات المؤشر بعد تسجيل جولات جديدة.";return;}rows.forEach(r=>{const item=document.createElement("div"),head=document.createElement("strong"),detail=document.createElement("span");item.className="prediction-comparison-row";head.textContent="الجولة "+r.roundId+" · النتيجة الفعلية "+Number(r.actualMultiplier).toFixed(2)+"x";detail.textContent=(r.thresholdScores||[]).map(x=>x.threshold+"x: توقع "+(x.probability*100).toFixed(1)+"% · "+(x.actual?"تحقق":"لم يتحقق")).join(" | ");item.append(head,detail);el.appendChild(item);});}
 function renderCollected(){
  const rounds=loadCollected(),count=$("collectorCount"),list=$("collectorSaved");
  count.textContent="الجولات المحفوظة: "+rounds.length;list.replaceChildren();
@@ -67,32 +67,29 @@ function schedulePredictionRefresh(){
  if(predictionRefreshTimer)clearTimeout(predictionRefreshTimer);
  predictionRefreshTimer=setTimeout(()=>{refreshPredictionFromHistory();},180);
 }
+function renderHistoryAnalysis(values){
+ const f=CrashAnalytics.forecast(values,[1.5,2,3,5,10],300),b=CrashAnalytics.backtest(values,.8,[1.5,2,3,5,10]);
+ const sample=$("analysisSample"),rates=$("thresholdRates"),meta=$("backtestMeta"),back=$("backtestRates");
+ if(sample)sample.textContent="العينة المتحركة: آخر "+f.sampleSize+" جولة · الوسيط التاريخي "+f.median.toFixed(2)+"x · المتوسط "+f.mean.toFixed(2)+"x";
+ if(rates){rates.replaceChildren();f.thresholds.forEach(x=>{const row=document.createElement("div");row.className="analysis-row";row.textContent=x.threshold+"x فأكثر: "+(x.rate*100).toFixed(1)+"% ("+x.successes+"/"+x.total+") · مجال ثقة 95%: "+(x.low*100).toFixed(1)+"–"+(x.high*100).toFixed(1)+"%";rates.appendChild(row);});}
+ if(meta)meta.textContent="تدريب زمني: "+b.trainSize+" جولة · اختبار لاحق مستقل: "+b.testSize+" جولة";
+ if(back){back.replaceChildren();b.rows.forEach(x=>{const row=document.createElement("div");row.className="analysis-row";row.textContent=x.threshold+"x · معدل التدريب "+(x.trainRate*100).toFixed(1)+"% · الاختبار "+(x.testRate*100).toFixed(1)+"% · Brier "+x.brier.toFixed(3);back.appendChild(row);});}
+}
 async function refreshPredictionFromHistory(){
  const number=$("multiplier"),thresholdEl=$("autoThreshold"),status=$("status"),btn=$("nextRound"),note=$("subnote");
  try{
   const {values,source}=await predictionValues();
-  if(values.length<30){
-   number.innerHTML="--<small>x</small>";
-   thresholdEl.textContent="بانتظار 30 نتيجة فعلية على الأقل";
-   if(status)status.textContent="المتاح "+values.length+" نتيجة؛ لا يمكن حساب المؤشر قبل اكتمال 30 نتيجة.";
-   if(note)note.textContent="المؤشر الإحصائي التجريبي يعتمد على آخر 30 جولة مكتملة.";
-   return;
-  }
-  const sample=values.slice(-30);
-  const median=CrashAnalytics.median(sample);
-  const mean=sample.reduce((sum,value)=>sum+value,0)/sample.length;
-  const signal=Math.max(1,Math.min(20,median*0.65+mean*0.35));
-  number.innerHTML=signal.toFixed(2)+"<small>x</small>";
-  thresholdEl.textContent="المؤشر الإحصائي للجولة التالية · آخر 30 جولة";
-  if(status)status.textContent="تم التحديث تلقائيًا بعد آخر جولة مكتملة.";
-  if(note)note.textContent="المعادلة: الوسيط × 65% + المتوسط × 35%، مع حصر الناتج بين 1x و20x. مصدر البيانات: "+source+". هذا مؤشر تاريخي تجريبي وليس توقعًا موثوقًا لنقطة الانهيار.";
-  showRolling(values);
-  const collected=loadCollected();
-  localStorage.setItem(PENDING_PREDICTION_KEY,JSON.stringify({predictedMultiplier:Number(signal.toFixed(6)),basedOnRoundId:collected.length?String(collected[collected.length-1].roundId):null,capturedAt:new Date().toISOString(),sampleSize:30}));
-  if(btn&&!btn.disabled)btn.textContent="تحديث المؤشر";
- }catch(error){
-  if(status)status.textContent="تعذر تحديث المؤشر: "+String(error&&error.message||error);
- }
+  if(values.length<30){number.innerHTML="--<small>x</small>";thresholdEl.textContent="بانتظار 30 نتيجة فعلية على الأقل";if(status)status.textContent="المتاح "+values.length+" نتيجة؛ نحتاج 30 على الأقل.";if(note)note.textContent="لا نعرض رقمًا تنبؤيًا دون تحقق خارج العينة.";return;}
+  const f=CrashAnalytics.forecast(values,[1.5,2,3,5,10],300);
+  number.innerHTML=f.median.toFixed(2)+"<small>x</small>";
+  thresholdEl.textContent="وسيط تاريخي لآخر "+f.sampleSize+" جولة — ليس توقعًا";
+  if(status)status.textContent="تم تحديث التحليل من "+source+".";
+  if(note)note.textContent="الرقم المعروض وصف للوسيط التاريخي فقط. معدلات العتبات واختبارها الزمني ظاهرة أسفل نتيجة الجولة.";
+  renderHistoryAnalysis(values);showRolling(values);
+  const collected=loadCollected(),thresholdScores=f.thresholds.map(x=>({threshold:x.threshold,probability:x.rate}));
+  localStorage.setItem(PENDING_PREDICTION_KEY,JSON.stringify({thresholdScores,basedOnRoundId:collected.length?String(collected[collected.length-1].roundId):null,capturedAt:new Date().toISOString(),sampleSize:f.sampleSize}));
+  if(btn&&!btn.disabled)btn.textContent="تحديث التحليل";
+ }catch(error){if(status)status.textContent="تعذر تحديث التحليل: "+String(error&&error.message||error);}
 }
 
 // استقبال الجولات المكتملة من إضافة Chrome وربطها بالسجل المحلي.
@@ -103,7 +100,7 @@ function receiveLiveRound(round){
  const existing=current.find(r=>String(r.roundId)===String(round.roundId));
  if(existing&&Number(existing.finalMultiplier)===value)return true;
  if(!existing){
-  try{const pending=JSON.parse(localStorage.getItem(PENDING_PREDICTION_KEY)||"null");if(pending&&Number.isFinite(Number(pending.predictedMultiplier))){const log=loadPredictionLog();if(!log.some(x=>String(x.roundId)===String(round.roundId))){const predicted=Number(pending.predictedMultiplier),absoluteError=Math.abs(value-predicted);log.push({roundId:String(round.roundId),predictedMultiplier:predicted,actualMultiplier:value,absoluteError,relativeErrorPct:absoluteError/value*100,basedOnRoundId:pending.basedOnRoundId,capturedAt:pending.capturedAt,recordedAt:new Date().toISOString()});localStorage.setItem(PREDICTION_LOG_KEY,JSON.stringify(log.slice(-500)));}}}catch(_){}
+  try{const pending=JSON.parse(localStorage.getItem(PENDING_PREDICTION_KEY)||"null");if(pending&&Array.isArray(pending.thresholdScores)){const log=loadPredictionLog();if(!log.some(x=>String(x.roundId)===String(round.roundId))){const thresholdScores=pending.thresholdScores.map(x=>({threshold:x.threshold,probability:x.probability,actual:value>=x.threshold}));log.push({roundId:String(round.roundId),actualMultiplier:value,thresholdScores,basedOnRoundId:pending.basedOnRoundId,capturedAt:pending.capturedAt,recordedAt:new Date().toISOString()});localStorage.setItem(PREDICTION_LOG_KEY,JSON.stringify(log.slice(-500)));}}}catch(_){}
  }
  const merged=CrashCollector.mergeCollections(current,[round]);
  saveCollected(merged.rounds);
