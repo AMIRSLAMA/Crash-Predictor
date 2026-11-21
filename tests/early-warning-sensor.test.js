@@ -30,3 +30,10 @@ test("does not invent a start time when OnStart was not observed",()=>{
  assert.equal(result.measurement.startedToCrashMs,null);
  assert.equal(result.measurement.lastStageToCrashMs,250);
 });
+
+test("detects candidate timing fields in a pre-round event but does not claim a countdown",()=>{
+ const sensor=createSensor();
+ const result=sensor.observe("OnBetting",{l:104,remainingTime:4200},500);
+ assert.equal(result.type,"signal");
+ assert.deepEqual(result.candidateKeys,["remainingTime"]);
+});
