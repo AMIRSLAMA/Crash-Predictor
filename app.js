@@ -17,8 +17,9 @@ function renderPredictionComparisons(){
  rows.forEach(r=>{
   const item=document.createElement("div"),head=document.createElement("strong"),detail=document.createElement("span");
   item.className="prediction-comparison-row";
-  head.textContent="الجولة "+r.roundId+" · احتمال 2x+ "+(Number(r.probability2||0)*100).toFixed(1)+"% · الفعلي "+(r.actualAtLeast2?"حقق 2x+":"أقل من 2x");
-  detail.textContent="درجة Brier: "+Number(r.brier2).toFixed(3)+" · كلما اقتربت من صفر كان أفضل.";
+  const valid=Number.isFinite(Number(r.probability2))&&Number(r.probability2)>=0&&Number(r.probability2)<=1&&Number.isFinite(Number(r.brier2))&&typeof r.actualAtLeast2==="boolean";
+  head.textContent="الجولة "+r.roundId+" · "+(valid?("احتمال 2x+ "+(Number(r.probability2)*100).toFixed(1)+"% · الفعلي "+(r.actualAtLeast2?"حقق 2x+":"أقل من 2x")):"بيانات التوقع غير مكتملة — مستبعدة من التقييم");
+  detail.textContent=valid?("درجة Brier: "+Number(r.brier2).toFixed(3)+" · كلما اقتربت من صفر كان أفضل."):"لا تُعرض نسبة 0% افتراضية ولا تُحسب درجة Brier لهذا السجل.";
   item.append(head,detail);el.appendChild(item);
  });
 }
@@ -46,17 +47,19 @@ async function predictionValues(){
  const byRound=new Map();
  importedHistory.forEach(r=>byRound.set(String(r.roundId),Number(r.multiplier)));
  loadCollected().forEach(r=>{const value=Number(r.finalMultiplier);if(Number.isFinite(value)&&value>=1)byRound.set(String(r.roundId),value);});
- const combined=[...byRound.entries()].sort((a,b)=>{const x=Number(a[0]),y=Number(b[0]);return Number.isFinite(x)&&Number.isFinite(y)?x-y:String(a[0]).localeCompare(String(b[0]));}).map(x=>x[1]);
+ const sorted=[...byRound.entries()].sort((a,b)=>{const x=Number(a[0]),y=Number(b[0]);return Number.isFinite(x)&&Number.isFinite(y)?x-y:String(a[0]).localeCompare(String(b[0]));});
+ const combined=sorted.map(x=>x[1]),baseOnRoundId=sorted.length?String(sorted[sorted.length-1][0]):null;
  const manual=CrashAnalytics.parseMultipliers(input.value);
- if(combined.length>=30)return {values:combined,source:"قاعدة النتائج المرفقة والجولات الجديدة المحفوظة"};
- return {values:manual,source:"السجل الذي أدخلته يدويًا"};
+ if(combined.length>=30)return {values:combined,baseOnRoundId,source:"قاعدة النتائج المرفقة والجولات الجديدة المحفوظة"};
+ return {values:manual,baseOnRoundId:null,source:"السجل الذي أدخلته يدويًا"};
 }
 
-function rollingStats(values){
- const windows=[100,300,500];
- return windows.map(n=>{const sample=values.slice(-Math.min(n,values.length));const rates=[2,3,5,10].map(t=>({t,p:sample.filter(v=>v>=t).length/sample.length}));const best=rates.sort((a,b)=>Math.abs(a.p-.5)-Math.abs(b.p-.5)||a.t-b.t)[0];return "آخر "+sample.length+" جولة: "+best.t+"x ("+(best.p*100).toFixed(1)+"%)";}).join(" · ");
+function rollingStats(forecast){
+ const windows=forecast.rollingWindows||[];
+ return windows.map(w=>{const p2=w.probabilities.find(x=>x.threshold===2),p3=w.probabilities.find(x=>x.threshold===3),p5=w.probabilities.find(x=>x.threshold===5);
+ return "آخر "+w.window+" جولة — 2x: "+(p2&&p2.probability!==null?(p2.probability*100).toFixed(1)+"%":"غير متاح")+" · 3x: "+(p3&&p3.probability!==null?(p3.probability*100).toFixed(1)+"%":"غير متاح")+" · 5x: "+(p5&&p5.probability!==null?(p5.probability*100).toFixed(1)+"%":"غير متاح");}).join(" | ");
 }
-function showRolling(values){const el=$("rollingStats");if(el)el.textContent=rollingStats(values);}
+function showRolling(forecast){const el=$("rollingStats");if(el)el.textContent=rollingStats(forecast);}
 
 function recordPrediction(item){
  const key="crash-live-lab-v1";let a=[];
@@ -81,7 +84,7 @@ function schedulePredictionRefresh(){
 async function refreshPredictionFromHistory(){
  const number=$("multiplier"),thresholdEl=$("autoThreshold"),status=$("status"),btn=$("nextRound"),note=$("subnote");
  try{
-  const {values,source}=await predictionValues();
+  const {values,baseOnRoundId,source}=await predictionValues();
   if(values.length<30){
    number.innerHTML="--<small>%</small>";
    thresholdEl.textContent="بانتظار 30 نتيجة فعلية على الأقل";
@@ -95,8 +98,9 @@ async function refreshPredictionFromHistory(){
   thresholdEl.textContent="3x: "+(p3.probability*100).toFixed(1)+"% · 5x: "+(p5.probability*100).toFixed(1)+"% · فاصل 95% لـ2x: "+(p2.low*100).toFixed(1)+"–"+(p2.high*100).toFixed(1)+"% · n="+forecast.sampleSize;
   if(status)status.textContent="تم تحديث الاحتمالات من النتائج المسجلة.";
   if(note)note.textContent="3x: "+(p3.probability*100).toFixed(1)+"% · 5x: "+(p5.probability*100).toFixed(1)+"% · فاصل ثقة 95% لاحتمال 2x+: "+(p2.low*100).toFixed(1)+"%–"+(p2.high*100).toFixed(1)+"%. المصدر: "+source+". احتمالات تاريخية وصفية وليست ضمانًا للجولة القادمة.";
+  showRolling(forecast);
   const collected=loadCollected();
-  localStorage.setItem(PENDING_PREDICTION_KEY,JSON.stringify({probabilities:forecast.probabilities,basedOnRoundId:collected.length?String(collected[collected.length-1].roundId):null,capturedAt:new Date().toISOString(),sampleSize:forecast.sampleSize}));
+  localStorage.setItem(PENDING_PREDICTION_KEY,JSON.stringify({probabilities:forecast.probabilities,basedOnRoundId,capturedAt:new Date().toISOString(),sampleSize:forecast.sampleSize}));
   if(btn&&!btn.disabled)btn.textContent="تحديث الاحتمالات";
  }catch(error){
   if(status)status.textContent="تعذر تحديث الاحتمالات: "+String(error&&error.message||error);
@@ -111,7 +115,7 @@ function receiveLiveRound(round){
  const existing=current.find(r=>String(r.roundId)===String(round.roundId));
  if(existing&&Number(existing.finalMultiplier)===value)return true;
  if(!existing){
-  try{const pending=JSON.parse(localStorage.getItem(PENDING_PREDICTION_KEY)||"null");const p2=pending?.probabilities?.find(x=>Number(x.threshold)===2);if(p2&&String(pending.basedOnRoundId)!==String(round.roundId)){const log=loadPredictionLog();if(!log.some(x=>String(x.roundId)===String(round.roundId))){const actualAtLeast2=value>=2,probability2=Number(p2.probability);log.push({roundId:String(round.roundId),probability2,actualAtLeast2,brier2:(probability2-(actualAtLeast2?1:0))**2,basedOnRoundId:pending.basedOnRoundId,capturedAt:pending.capturedAt,recordedAt:new Date().toISOString()});localStorage.setItem(PREDICTION_LOG_KEY,JSON.stringify(log.slice(-500)));}}}catch(_){}
+  try{const pending=JSON.parse(localStorage.getItem(PENDING_PREDICTION_KEY)||"null");const p2=pending?.probabilities?.find(x=>Number(x.threshold)===2);if(p2&&Number.isFinite(Number(p2.probability))&&Number(p2.probability)>=0&&Number(p2.probability)<=1&&String(pending.basedOnRoundId)!==String(round.roundId)){const log=loadPredictionLog();if(!log.some(x=>String(x.roundId)===String(round.roundId))){const actualAtLeast2=value>=2,probability2=Number(p2.probability);log.push({roundId:String(round.roundId),probability2,actualAtLeast2,brier2:(probability2-(actualAtLeast2?1:0))**2,basedOnRoundId:pending.basedOnRoundId,capturedAt:pending.capturedAt,recordedAt:new Date().toISOString()});localStorage.setItem(PREDICTION_LOG_KEY,JSON.stringify(log.slice(-500)));}}}catch(_){}
  }
  const merged=CrashCollector.mergeCollections(current,[round]);
  saveCollected(merged.rounds);
