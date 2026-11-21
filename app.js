@@ -78,7 +78,8 @@ function schedulePredictionRefresh(){
 async function refreshPredictionFromHistory(){
  const number=$("multiplier"),thresholdEl=$("autoThreshold"),status=$("status"),btn=$("nextRound"),note=$("subnote");
  try{
-  const {values,source}=await predictionValues();\n  showRolling(values);
+  const {values,source}=await predictionValues();
+  showRolling(values);
   if(values.length<30){
    number.innerHTML="--<small>%</small>";
    thresholdEl.textContent="بانتظار 30 نتيجة فعلية على الأقل";
@@ -93,7 +94,8 @@ async function refreshPredictionFromHistory(){
   if(status)status.textContent="تم تحديث الاحتمالات من النتائج المسجلة.";
   if(note)note.textContent="3x: "+(p3.probability*100).toFixed(1)+"% · 5x: "+(p5.probability*100).toFixed(1)+"% · فاصل ثقة 95% لاحتمال 2x+: "+(p2.low*100).toFixed(1)+"%–"+(p2.high*100).toFixed(1)+"%. المصدر: "+source+". احتمالات تاريخية وصفية وليست ضمانًا للجولة القادمة.";
   const collected=loadCollected();
-  const latestRoundId=collected.length?String(collected[collected.length-1].roundId):null;\n  localStorage.setItem(PENDING_PREDICTION_KEY,JSON.stringify({probabilities:forecast.probabilities,basedOnRoundId:latestRoundId,capturedAt:new Date().toISOString(),sampleSize:forecast.sampleSize}));
+  const latestRoundId=collected.length?String(collected[collected.length-1].roundId):null;
+  localStorage.setItem(PENDING_PREDICTION_KEY,JSON.stringify({probabilities:forecast.probabilities,basedOnRoundId:latestRoundId,capturedAt:new Date().toISOString(),sampleSize:forecast.sampleSize}));
   if(btn&&!btn.disabled)btn.textContent="تحديث الاحتمالات";
  }catch(error){
   if(status)status.textContent="تعذر تحديث الاحتمالات: "+String(error&&error.message||error);
@@ -165,7 +167,8 @@ $("decodeMessages").addEventListener("click",()=>{
 });
 $("clearDecoder").addEventListener("click",()=>{decoderInput.value="";decoderResults.replaceChildren();$("decoderStatus").textContent="تم مسح مربع الرسائل فقط؛ السجل المحفوظ لم يتغير.";});
 $("exportJson").addEventListener("click",()=>{const rounds=loadCollected();if(!rounds.length){$("decoderStatus").textContent="لا توجد جولات لتصديرها حتى الآن.";return;}downloadFile("crash-rounds.json","application/json;charset=utf-8",JSON.stringify(rounds,null,2));});
-$("exportCsv").addEventListener("click",()=>{const rounds=loadCollected();if(!rounds.length){$("decoderStatus").textContent="لا توجد جولات لتصديرها حتى الآن.";return;}const q=v=>'"'+String(v??"").replace(/"/g,'""')+'"';const rows=[["roundId","finalMultiplier","sources","mismatch","crash","resultCrash","resultUser","firstEventTime","lastEventTime"],...rounds.map(r=>[r.roundId,r.finalMultiplier,(r.sources||[]).join("|"),r.mismatch,r.crash,r.resultCrash,r.resultUser,r.firstEventTime,r.lastEventTime])];downloadFile("crash-rounds.csv","text/csv;charset=utf-8","\uFEFF"+rows.map(row=>row.map(q).join(",")).join("\r\n"));});
+$("exportCsv").addEventListener("click",()=>{const rounds=loadCollected();if(!rounds.length){$("decoderStatus").textContent="لا توجد جولات لتصديرها حتى الآن.";return;}const q=v=>'"'+String(v??"").replace(/"/g,'""')+'"';const rows=[["roundId","finalMultiplier","sources","mismatch","crash","resultCrash","resultUser","firstEventTime","lastEventTime"],...rounds.map(r=>[r.roundId,r.finalMultiplier,(r.sources||[]).join("|"),r.mismatch,r.crash,r.resultCrash,r.resultUser,r.firstEventTime,r.lastEventTime])];downloadFile("crash-rounds.csv","text/csv;charset=utf-8","\uFEFF"+rows.map(row=>row.map(q).join(",")).join("\r
+"));});
 $("clearCollected").addEventListener("click",()=>{if(!loadCollected().length){$("decoderStatus").textContent="السجل المحفوظ فارغ بالفعل.";return;}if(!window.confirm("هل تريد مسح كل الجولات المحفوظة على هذا الجهاز؟ لا يمكن التراجع عن ذلك."))return;localStorage.removeItem(STORAGE_KEY);renderCollected();$("decoderStatus").textContent="تم مسح السجل المحفوظ من هذا المتصفح.";});
 renderCollected();
 // تحميل المؤشر تلقائيًا فور فتح البرنامج.
