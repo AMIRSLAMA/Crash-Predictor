@@ -10,7 +10,18 @@ input.value=localStorage.getItem("crash-history")||"";
 function loadCollected(){try{const data=JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]");return Array.isArray(data)?data:[];}catch(_){return [];}}
 function saveCollected(rounds){localStorage.setItem(STORAGE_KEY,JSON.stringify(rounds));renderCollected();renderLiveRounds();}
 function loadPredictionLog(){try{const data=JSON.parse(localStorage.getItem(PREDICTION_LOG_KEY)||"[]");return Array.isArray(data)?data:[];}catch(_){return [];}}
-function renderPredictionComparisons(){const el=$("latestComparison");if(!el)return;const rows=loadPredictionLog().slice(-5).reverse();el.replaceChildren();if(!rows.length){el.textContent="ستظهر المقارنة بعد تسجيل أول نتيجة جديدة بعد حفظ المؤشر.";return;}rows.forEach(r=>{const item=document.createElement("div"),head=document.createElement("strong"),detail=document.createElement("span");item.className="prediction-comparison-row";head.textContent="الجولة "+r.roundId+" · المؤشر "+Number(r.predictedMultiplier).toFixed(2)+"x مقابل الفعلي "+Number(r.actualMultiplier).toFixed(2)+"x";detail.textContent="الفرق المطلق: "+Number(r.absoluteError).toFixed(2)+"x · الفرق النسبي: "+Number(r.relativeErrorPct).toFixed(1)+"%";item.append(head,detail);el.appendChild(item);});}
+function renderPredictionComparisons(){
+ const el=$("latestComparison");if(!el)return;
+ const rows=loadPredictionLog().slice(-5).reverse();el.replaceChildren();
+ if(!rows.length){el.textContent="ستظهر مقارنة الاحتمالات بعد وصول جولات جديدة.";return;}
+ rows.forEach(r=>{
+  const item=document.createElement("div"),head=document.createElement("strong"),detail=document.createElement("span");
+  item.className="prediction-comparison-row";
+  head.textContent="الجولة "+r.roundId+" · احتمال 2x+ "+(Number(r.probability2||0)*100).toFixed(1)+"% · الفعلي "+(r.actualAtLeast2?"حقق 2x+":"أقل من 2x");
+  detail.textContent="درجة Brier: "+Number(r.brier2).toFixed(3)+" · كلما اقتربت من صفر كان أفضل.";
+  item.append(head,detail);el.appendChild(item);
+ });
+}
 function renderCollected(){
  const rounds=loadCollected(),count=$("collectorCount"),list=$("collectorSaved");
  count.textContent="الجولات المحفوظة: "+rounds.length;list.replaceChildren();
@@ -72,26 +83,23 @@ async function refreshPredictionFromHistory(){
  try{
   const {values,source}=await predictionValues();
   if(values.length<30){
-   number.innerHTML="--<small>x</small>";
+   number.innerHTML="--<small>%</small>";
    thresholdEl.textContent="بانتظار 30 نتيجة فعلية على الأقل";
-   if(status)status.textContent="المتاح "+values.length+" نتيجة؛ لا يمكن حساب المؤشر قبل اكتمال 30 نتيجة.";
-   if(note)note.textContent="المؤشر الإحصائي التجريبي يعتمد على آخر 30 جولة مكتملة.";
+   if(status)status.textContent="المتاح "+values.length+" نتيجة؛ نحتاج 30 نتيجة مكتملة.";
+   if(note)note.textContent="لا يتم عرض احتمال قبل توفر عينة كافية.";
    return;
   }
-  const sample=values.slice(-30);
-  const median=CrashAnalytics.median(sample);
-  const mean=sample.reduce((sum,value)=>sum+value,0)/sample.length;
-  const signal=Math.max(1,Math.min(20,median*0.65+mean*0.35));
-  number.innerHTML=signal.toFixed(2)+"<small>x</small>";
-  thresholdEl.textContent="المؤشر الإحصائي للجولة التالية · آخر 30 جولة";
-  if(status)status.textContent="تم التحديث تلقائيًا بعد آخر جولة مكتملة.";
-  if(note)note.textContent="المعادلة: الوسيط × 65% + المتوسط × 35%، مع حصر الناتج بين 1x و20x. مصدر البيانات: "+source+". هذا مؤشر تاريخي تجريبي وليس توقعًا موثوقًا لنقطة الانهيار.";
-  showRolling(values);
+  const forecast=CrashForecast.forecastNext(values),byThreshold=new Map(forecast.probabilities.map(x=>[x.threshold,x]));
+  const p2=byThreshold.get(2),p3=byThreshold.get(3),p5=byThreshold.get(5);
+  number.innerHTML=(p2.probability*100).toFixed(1)+"<small>%</small>";
+  thresholdEl.textContent="3x: "+(p3.probability*100).toFixed(1)+"% · 5x: "+(p5.probability*100).toFixed(1)+"% · فاصل 95% لـ2x: "+(p2.low*100).toFixed(1)+"–"+(p2.high*100).toFixed(1)+"% · n="+forecast.sampleSize;
+  if(status)status.textContent="تم تحديث الاحتمالات من النتائج المسجلة.";
+  if(note)note.textContent="3x: "+(p3.probability*100).toFixed(1)+"% · 5x: "+(p5.probability*100).toFixed(1)+"% · فاصل ثقة 95% لاحتمال 2x+: "+(p2.low*100).toFixed(1)+"%–"+(p2.high*100).toFixed(1)+"%. المصدر: "+source+". احتمالات تاريخية وصفية وليست ضمانًا للجولة القادمة.";
   const collected=loadCollected();
-  localStorage.setItem(PENDING_PREDICTION_KEY,JSON.stringify({predictedMultiplier:Number(signal.toFixed(6)),basedOnRoundId:collected.length?String(collected[collected.length-1].roundId):null,capturedAt:new Date().toISOString(),sampleSize:30}));
-  if(btn&&!btn.disabled)btn.textContent="تحديث المؤشر";
+  localStorage.setItem(PENDING_PREDICTION_KEY,JSON.stringify({probabilities:forecast.probabilities,basedOnRoundId:collected.length?String(collected[collected.length-1].roundId):null,capturedAt:new Date().toISOString(),sampleSize:forecast.sampleSize}));
+  if(btn&&!btn.disabled)btn.textContent="تحديث الاحتمالات";
  }catch(error){
-  if(status)status.textContent="تعذر تحديث المؤشر: "+String(error&&error.message||error);
+  if(status)status.textContent="تعذر تحديث الاحتمالات: "+String(error&&error.message||error);
  }
 }
 
@@ -103,7 +111,7 @@ function receiveLiveRound(round){
  const existing=current.find(r=>String(r.roundId)===String(round.roundId));
  if(existing&&Number(existing.finalMultiplier)===value)return true;
  if(!existing){
-  try{const pending=JSON.parse(localStorage.getItem(PENDING_PREDICTION_KEY)||"null");if(pending&&Number.isFinite(Number(pending.predictedMultiplier))){const log=loadPredictionLog();if(!log.some(x=>String(x.roundId)===String(round.roundId))){const predicted=Number(pending.predictedMultiplier),absoluteError=Math.abs(value-predicted);log.push({roundId:String(round.roundId),predictedMultiplier:predicted,actualMultiplier:value,absoluteError,relativeErrorPct:absoluteError/value*100,basedOnRoundId:pending.basedOnRoundId,capturedAt:pending.capturedAt,recordedAt:new Date().toISOString()});localStorage.setItem(PREDICTION_LOG_KEY,JSON.stringify(log.slice(-500)));}}}catch(_){}
+  try{const pending=JSON.parse(localStorage.getItem(PENDING_PREDICTION_KEY)||"null");const p2=pending?.probabilities?.find(x=>Number(x.threshold)===2);if(p2&&String(pending.basedOnRoundId)!==String(round.roundId)){const log=loadPredictionLog();if(!log.some(x=>String(x.roundId)===String(round.roundId))){const actualAtLeast2=value>=2,probability2=Number(p2.probability);log.push({roundId:String(round.roundId),probability2,actualAtLeast2,brier2:(probability2-(actualAtLeast2?1:0))**2,basedOnRoundId:pending.basedOnRoundId,capturedAt:pending.capturedAt,recordedAt:new Date().toISOString()});localStorage.setItem(PREDICTION_LOG_KEY,JSON.stringify(log.slice(-500)));}}}catch(_){}
  }
  const merged=CrashCollector.mergeCollections(current,[round]);
  saveCollected(merged.rounds);
@@ -146,7 +154,7 @@ $("nextRound").addEventListener("click",async()=>{
  const btn=$("nextRound");
  btn.disabled=true;btn.textContent="جارٍ تحديث المؤشر…";
  await refreshPredictionFromHistory();
- setTimeout(()=>{btn.disabled=false;btn.textContent="تحديث المؤشر";},500);
+ setTimeout(()=>{btn.disabled=false;btn.textContent="تحديث الاحتمالات";},500);
 });
 
 const decoderInput=$("decoderInput"),decoderResults=$("decoderResults");
