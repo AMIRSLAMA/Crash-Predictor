@@ -1,5 +1,6 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('node:path');
+const { parseSignalRFrame } = require('./signalr-parser');
 
 let dashboard;
 let gameWindow;
@@ -47,73 +48,6 @@ function emitGameEvent(target, args) {
 }
 
 function inspectFrame(payload) {
-  if (typeof payload !== 'string') return;
-  // SignalR JSON protocol commonly separates messages with ASCII record separator.
-  for (const chunk of payload.split(String.fromCharCode(30))) {
-    const trimmed = chunk.trim();
-    if (!trimmed || trimmed[0] !== '{') continue;
-    try {
-      const msg = JSON.parse(trimmed);
-      if (msg.type === 1 && typeof msg.target === 'string') emitGameEvent(msg.target, msg.arguments);
-    } catch { /* Ignore non-JSON/binary frames; never store raw payloads. */ }
-  }
+  for (const event of parseSignalRFrame(payload)) emitGameEvent(event.target, event.args);
 }
 
-function attachObserver(win) {
-  const dbg = win.webContents.debugger;
-  try {
-    if (!dbg.isAttached()) dbg.attach('1.3');
-    dbg.sendCommand('Network.enable').catch(() => {});
-    dbg.on('message', (_event, method, params) => {
-      if (method === 'Network.webSocketCreated') wsConnections++;
-      if (method === 'Network.webSocketFrameReceived') {
-        wsFrames++;
-        inspectFrame(params?.response?.payloadData);
-        if (wsFrames % 10 === 0) publish();
-      }
-    });
-    dbg.on('detach', () => { lastEvent = 'انفصل مراقب الشبكة'; publish(); });
-  } catch (error) {
-    lastEvent = 'تعذر تفعيل مراقبة WebSocket';
-    publish();
-  }
-}
-
-function createDashboard() {
-  dashboard = new BrowserWindow({
-    width: 1120, height: 760, minWidth: 900, minHeight: 620,
-    backgroundColor: '#070b14',
-    webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false }
-  });
-  dashboard.loadFile('index.html');
-  dashboard.on('closed', () => { dashboard = null; });
-}
-
-function createGameWindow() {
-  gameWindow = new BrowserWindow({
-    width: 1200, height: 850, minWidth: 800, minHeight: 600,
-    title: 'CRASH FLIGHT · نافذة اللعبة',
-    backgroundColor: '#080d18',
-    webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true }
-  });
-  gameWindow.loadURL(GAME_URL);
-  gameWindow.webContents.once('dom-ready', () => attachObserver(gameWindow));
-  gameWindow.on('closed', () => { gameWindow = null; });
-}
-
-app.whenReady().then(() => {
-  ipcMain.handle('flight:open-game', () => {
-    if (!gameWindow) createGameWindow();
-    else gameWindow.focus();
-    return true;
-  });
-  ipcMain.handle('flight:get-state', () => ({
-    rounds, currentRound,
-    stats: { wsConnections, wsFrames, signalrEvents, saved: rounds.length, lastEvent, lastActivity }
-  }));
-  createDashboard();
-  createGameWindow();
-  app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createDashboard(); });
-});
-
-app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
