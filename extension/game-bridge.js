@@ -30,6 +30,7 @@
    roundId: o.l == null ? null : String(o.l),
    stageState: Number.isFinite(Number(o.s)) ? Number(o.s) : null,
    keys: Object.keys(o).slice(0,40),
+   timingFields: globalThis.CrashTimingFields?.collect?.(o) || {},
    numericFields
   };
   sampleQueue = sampleQueue.then(async () => {

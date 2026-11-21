@@ -41,8 +41,9 @@ async function renderDiagnostics(){
   "",
   "آخر عينات أحداث SignalR (بيانات خام غير محفوظة):",
   ...(Array.isArray(data.collectorEventSamples)?data.collectorEventSamples.slice(-8).reverse().map(s=>{
-   const fields=Object.keys(s.numericFields||{}).length?JSON.stringify(s.numericFields):"لا توجد قيم رقمية مرشحة";
-   return (s.at||"") + " · " + (s.target||"") + " · الجولة " + (s.roundId??"-") + " · الحالة " + (s.stageState??"-") + " · " + fields + " · المفاتيح: " + (s.keys||[]).join(",");
+   const fields=Object.keys(s.numericFields||{}).length?JSON.stringify(s.numericFields):"لا توجد قيم رقمية عامة";
+   const timing=Object.keys(s.timingFields||{}).length?JSON.stringify(s.timingFields):"لا توجد حقول توقيت مرشحة";
+   return (s.at||"") + " · " + (s.target||"") + " · الجولة " + (s.roundId??"-") + " · الحالة " + (s.stageState??"-") + " · قيم: " + fields + " · توقيت محتمل: " + timing + " · المفاتيح: " + (s.keys||[]).join(",");
   }):[])
  ].filter(Boolean).join("\n");
 }
@@ -59,7 +60,7 @@ start.addEventListener("click",async()=>{
   await unregisterGameScripts();
   await chrome.scripting.registerContentScripts([
    {id:"crash-game-hook",matches:[origin+"/*"],js:["sensor-core.js","game-hook.js"],runAt:"document_start",world:"MAIN",allFrames:true,persistAcrossSessions:true},
-   {id:"crash-game-bridge",matches:[origin+"/*"],js:["game-bridge.js"],runAt:"document_start",world:"ISOLATED",allFrames:true,persistAcrossSessions:true}
+   {id:"crash-game-bridge",matches:[origin+"/*"],js:["timing-fields.js","game-bridge.js"],runAt:"document_start",world:"ISOLATED",allFrames:true,persistAcrossSessions:true}
   ]);
   status.textContent="تم الربط. جاري إعادة تحميل صفحة اللعبة لبدء الالتقاط من اتصال WebSocket.";
   await chrome.tabs.reload(tab.id);
