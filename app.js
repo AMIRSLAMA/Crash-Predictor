@@ -17,8 +17,10 @@ function renderPredictionComparisons(){
  rows.forEach(r=>{
   const item=document.createElement("div"),head=document.createElement("strong"),detail=document.createElement("span");
   item.className="prediction-comparison-row";
-  head.textContent="الجولة "+r.roundId+" · احتمال 2x+ "+(Number(r.probability2||0)*100).toFixed(1)+"% · الفعلي "+(r.actualAtLeast2?"حقق 2x+":"أقل من 2x");
-  detail.textContent="درجة Brier: "+Number(r.brier2).toFixed(3)+" · كلما اقتربت من صفر كان أفضل.";
+  const p=Number(r.probability2),validP=Number.isFinite(p)&&p>=0&&p<=1,actual=typeof r.actualAtLeast2==="boolean"; 
+  head.textContent="الجولة "+r.roundId+" · احتمال 2x+ "+(validP?(p*100).toFixed(1)+"%":"غير متوفر")+" · الفعلي "+(actual?(r.actualAtLeast2?"حقق 2x+":"أقل من 2x"):"غير مسجل");
+  const score=validP&&actual?(Number.isFinite(Number(r.brier2))?Number(r.brier2):((p-(r.actualAtLeast2?1:0))**2)):null;
+  detail.textContent="درجة Brier: "+(score===null?"غير متوفرة":score.toFixed(3))+(score===null?"":" · كلما اقتربت من صفر كان أفضل.");
   item.append(head,detail);el.appendChild(item);
  });
 }
@@ -53,16 +55,11 @@ async function predictionValues(){
 }
 
 function rollingStats(values){
- const windows=[100,300,500];
- return windows.map(n=>{const sample=values.slice(-Math.min(n,values.length));const rates=[2,3,5,10].map(t=>({t,p:sample.filter(v=>v>=t).length/sample.length}));const best=rates.sort((a,b)=>Math.abs(a.p-.5)-Math.abs(b.p-.5)||a.t-b.t)[0];return "آخر "+sample.length+" جولة: "+best.t+"x ("+(best.p*100).toFixed(1)+"%)";}).join(" · ");
+ const trend=CrashForecast.recentTrend(values,[30,100],[2,3,5]);
+ const names={up:"↑ ارتفاع",down:"↓ انخفاض",flat:"↔ ثابت",insufficient:"مقارنة غير كافية"};
+ return trend.map(row=>"آخر "+row.window+" جولة: "+row.rates.map(rate=>rate.threshold+"x "+(rate.currentRate===null?"—":(rate.currentRate*100).toFixed(1)+"%")+" ("+names[rate.direction]+(rate.delta===null?"":", "+(rate.delta>0?"+":"")+(rate.delta*100).toFixed(1)+" نقطة"))).join(" / ")).join(" · ");
 }
-function showRolling(values){const el=$("rollingStats");if(el)el.textContent=rollingStats(values);}
-
-function recordPrediction(item){
- const key="crash-live-lab-v1";let a=[];
- try{const parsed=JSON.parse(localStorage.getItem(key)||"[]");if(Array.isArray(parsed))a=parsed;}catch(_){}
- a.push(item);localStorage.setItem(key,JSON.stringify(a));
-}
+function showRolling(values){const el=$("rollingStats");if(el){el.textContent=rollingStats(values);el.hidden=false;}}
 
 function downloadFile(name,type,content){
  const blob=new Blob([content],{type}),url=URL.createObjectURL(blob),a=document.createElement("a");
@@ -81,7 +78,7 @@ function schedulePredictionRefresh(){
 async function refreshPredictionFromHistory(){
  const number=$("multiplier"),thresholdEl=$("autoThreshold"),status=$("status"),btn=$("nextRound"),note=$("subnote");
  try{
-  const {values,source}=await predictionValues();
+  const {values,source}=await predictionValues();\n  showRolling(values);
   if(values.length<30){
    number.innerHTML="--<small>%</small>";
    thresholdEl.textContent="بانتظار 30 نتيجة فعلية على الأقل";
@@ -96,7 +93,7 @@ async function refreshPredictionFromHistory(){
   if(status)status.textContent="تم تحديث الاحتمالات من النتائج المسجلة.";
   if(note)note.textContent="3x: "+(p3.probability*100).toFixed(1)+"% · 5x: "+(p5.probability*100).toFixed(1)+"% · فاصل ثقة 95% لاحتمال 2x+: "+(p2.low*100).toFixed(1)+"%–"+(p2.high*100).toFixed(1)+"%. المصدر: "+source+". احتمالات تاريخية وصفية وليست ضمانًا للجولة القادمة.";
   const collected=loadCollected();
-  localStorage.setItem(PENDING_PREDICTION_KEY,JSON.stringify({probabilities:forecast.probabilities,basedOnRoundId:collected.length?String(collected[collected.length-1].roundId):null,capturedAt:new Date().toISOString(),sampleSize:forecast.sampleSize}));
+  const latestRoundId=collected.length?String(collected[collected.length-1].roundId):null;\n  localStorage.setItem(PENDING_PREDICTION_KEY,JSON.stringify({probabilities:forecast.probabilities,basedOnRoundId:latestRoundId,capturedAt:new Date().toISOString(),sampleSize:forecast.sampleSize}));
   if(btn&&!btn.disabled)btn.textContent="تحديث الاحتمالات";
  }catch(error){
   if(status)status.textContent="تعذر تحديث الاحتمالات: "+String(error&&error.message||error);
@@ -111,7 +108,7 @@ function receiveLiveRound(round){
  const existing=current.find(r=>String(r.roundId)===String(round.roundId));
  if(existing&&Number(existing.finalMultiplier)===value)return true;
  if(!existing){
-  try{const pending=JSON.parse(localStorage.getItem(PENDING_PREDICTION_KEY)||"null");const p2=pending?.probabilities?.find(x=>Number(x.threshold)===2);if(p2&&String(pending.basedOnRoundId)!==String(round.roundId)){const log=loadPredictionLog();if(!log.some(x=>String(x.roundId)===String(round.roundId))){const actualAtLeast2=value>=2,probability2=Number(p2.probability);log.push({roundId:String(round.roundId),probability2,actualAtLeast2,brier2:(probability2-(actualAtLeast2?1:0))**2,basedOnRoundId:pending.basedOnRoundId,capturedAt:pending.capturedAt,recordedAt:new Date().toISOString()});localStorage.setItem(PREDICTION_LOG_KEY,JSON.stringify(log.slice(-500)));}}}catch(_){}
+  try{const pending=JSON.parse(localStorage.getItem(PENDING_PREDICTION_KEY)||"null");const p2=pending?.probabilities?.find(x=>Number(x.threshold)===2);if(p2&&Number.isFinite(Number(p2.probability))&&Number(p2.probability)>=0&&Number(p2.probability)<=1&&String(pending.basedOnRoundId)!==String(round.roundId)){const log=loadPredictionLog();if(!log.some(x=>String(x.roundId)===String(round.roundId))){const actualAtLeast2=value>=2,probability2=Number(p2.probability);log.push({roundId:String(round.roundId),probability2,actualAtLeast2,brier2:(probability2-(actualAtLeast2?1:0))**2,basedOnRoundId:pending.basedOnRoundId,capturedAt:pending.capturedAt,recordedAt:new Date().toISOString()});localStorage.setItem(PREDICTION_LOG_KEY,JSON.stringify(log.slice(-500)));}}}catch(_){}
  }
  const merged=CrashCollector.mergeCollections(current,[round]);
  saveCollected(merged.rounds);
