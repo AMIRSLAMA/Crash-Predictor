@@ -11,7 +11,7 @@
  }
  function createSensor(){
   let active=null;
-  const counts={starts:0,stages:0,crashes:0};
+  const counts={starts:0,stages:0,crashes:0,betting:0,registration:0};
   const measurements=[];
   function observe(target,payload,now){
    const name=String(target||"").toLowerCase();
@@ -21,7 +21,7 @@
    const roundId=id===null?null:String(id);
    if(name==="onstart"){
     counts.starts++;
-    active={roundId,startedAt:at,lastStageAt:null,stageCount:0,candidateKeys:[]};
+    active={roundId,startedAt:at,lastStageAt:null,stageCount:0,candidateKeys:candidateKeys(data)};
     return {type:"start",roundId,counts:snapshot().counts};
    }
    if(name==="onstage"){
@@ -34,6 +34,13 @@
     active.stageCount++;
     active.candidateKeys=[...new Set([...active.candidateKeys,...candidateKeys(data)])];
     return {type:"stage",roundId:active.roundId,stageCount:active.stageCount,stageState:data.s??null,candidateKeys:[...active.candidateKeys],counts:snapshot().counts};
+   }
+   if(name==="onbetting"||name==="onregistration"){
+    if(name==="onbetting")counts.betting++;else counts.registration++;
+    if(!active)active={roundId,startedAt:null,lastStageAt:null,stageCount:0,candidateKeys:[]};
+    const found=candidateKeys(data);
+    active.candidateKeys=[...new Set([...active.candidateKeys,...found])];
+    return found.length?{type:"signal",target,roundId:active.roundId,candidateKeys:[...active.candidateKeys],counts:snapshot().counts}:null;
    }
    if(name==="oncrash"){
     counts.crashes++;
