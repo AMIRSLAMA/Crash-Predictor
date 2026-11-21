@@ -67,6 +67,9 @@
    hudStatus.textContent = "تم رصد تحديث مرحلة رقم " + update.stageCount + ".";
    hudMetrics.textContent = "قيمة الحالة s: " + (update.stageState ?? "غير موجودة") +
     (update.candidateKeys?.length ? " · حقول زمنية محتملة: " + update.candidateKeys.join(", ") : " · لم يظهر حقل عدّ تنازلي معروف.");
+  } else if (update?.type === "signal") {
+   hudStatus.textContent = "حقل زمني محتمل ظهر في " + update.target + " — يحتاج تحققًا.";
+   hudMetrics.textContent = "أسماء الحقول: " + update.candidateKeys.join(", ") + ". لم نثبت معناها أو وحدتها بعد.";
   } else if (update?.type === "crash") {
    const m = update.measurement;
    hudStatus.textContent = "انتهت الجولة " + (m.roundId || "") + " — تم تسجيل القياس.";
