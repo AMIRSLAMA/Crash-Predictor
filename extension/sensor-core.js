@@ -21,7 +21,8 @@
    const roundId=id===null?null:String(id);
    if(name==="onstart"){
     counts.starts++;
-    active={roundId,startedAt:at,lastStageAt:null,stageCount:0,candidateKeys:candidateKeys(data)};
+    const previous=active&&(roundId===null||active.roundId===null||active.roundId===roundId)?active:null;
+    active={roundId,startedAt:at,lastStageAt:null,stageCount:0,candidateKeys:[...new Set([...(previous?.candidateKeys||[]),...candidateKeys(data)])]};
     return {type:"start",roundId,counts:snapshot().counts};
    }
    if(name==="onstage"){
