@@ -17,9 +17,9 @@ function renderPredictionComparisons(){
  rows.forEach(r=>{
   const item=document.createElement("div"),head=document.createElement("strong"),detail=document.createElement("span");
   item.className="prediction-comparison-row";
-  const p=Number(r.probability2),validP=Number.isFinite(p)&&p>=0&&p<=1,actual=typeof r.actualAtLeast2==="boolean"; 
+  const rawP=r.probability2,p=Number(rawP),validP=rawP!==null&&rawP!==undefined&&String(rawP).trim()!==""&&Number.isFinite(p)&&p>=0&&p<=1,actual=typeof r.actualAtLeast2==="boolean"; 
   head.textContent="الجولة "+r.roundId+" · احتمال 2x+ "+(validP?(p*100).toFixed(1)+"%":"غير متوفر")+" · الفعلي "+(actual?(r.actualAtLeast2?"حقق 2x+":"أقل من 2x"):"غير مسجل");
-  const score=validP&&actual?(Number.isFinite(Number(r.brier2))?Number(r.brier2):((p-(r.actualAtLeast2?1:0))**2)):null;
+  const rawScore=r.brier2,score=validP&&actual?(rawScore!==null&&rawScore!==undefined&&Number.isFinite(Number(rawScore))?Number(rawScore):((p-(r.actualAtLeast2?1:0))**2)):null;
   detail.textContent="درجة Brier: "+(score===null?"غير متوفرة":score.toFixed(3))+(score===null?"":" · كلما اقتربت من صفر كان أفضل.");
   item.append(head,detail);el.appendChild(item);
  });
