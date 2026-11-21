@@ -22,4 +22,19 @@ test("backtest is chronological and reports baseline and rolling Brier scores",(
 test("brier score evaluates probability forecasts against binary outcomes",()=>{
  assert.ok(Math.abs(Forecast.brierScore([.8,.2],[true,false])-.04)<1e-12);
 });
-\ntest("recent trend compares last 30 and 100 with prior windows",()=>{\n const values=Array.from({length:200},(_,i)=>i<100?1.2:3);\n const trend=Forecast.recentTrend(values,[30,100],[2]);\n assert.equal(trend[0].rates[0].currentRate,1);\n assert.equal(trend[0].rates[0].previousRate,1);\n assert.equal(trend[0].rates[0].direction,"flat");\n assert.equal(trend[1].rates[0].currentRate,1);\n assert.equal(trend[1].rates[0].previousRate,0);\n assert.equal(trend[1].rates[0].direction,"up");\n});\ntest("recent trend marks comparisons unavailable without a prior full window",()=>{\n const trend=Forecast.recentTrend([1.1,2.2,3.4],[30,100],[2]);\n assert.equal(trend[0].rates[0].direction,"insufficient");\n assert.equal(trend[0].rates[0].previousRate,null);\n});\n
+
+test("recent trend compares last 30 and 100 with prior windows",()=>{
+ const values=Array.from({length:200},(_,i)=>i<100?1.2:3);
+ const trend=Forecast.recentTrend(values,[30,100],[2]);
+ assert.equal(trend[0].rates[0].currentRate,1);
+ assert.equal(trend[0].rates[0].previousRate,1);
+ assert.equal(trend[0].rates[0].direction,"flat");
+ assert.equal(trend[1].rates[0].currentRate,1);
+ assert.equal(trend[1].rates[0].previousRate,0);
+ assert.equal(trend[1].rates[0].direction,"up");
+});
+test("recent trend marks comparisons unavailable without a prior full window",()=>{
+ const trend=Forecast.recentTrend([1.1,2.2,3.4],[30,100],[2]);
+ assert.equal(trend[0].rates[0].direction,"insufficient");
+ assert.equal(trend[0].rates[0].previousRate,null);
+});
