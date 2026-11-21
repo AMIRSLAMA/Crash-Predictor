@@ -22,3 +22,14 @@ test("backtest is chronological and reports baseline and rolling Brier scores",(
 test("brier score evaluates probability forecasts against binary outcomes",()=>{
  assert.ok(Math.abs(Forecast.brierScore([.8,.2],[true,false])-.04)<1e-12);
 });
+
+test("rolling windows report descriptive rates for the last 30 and 100 samples",()=>{
+ const values=Array.from({length:120},(_,i)=>i>=90?2.5:1.2);
+ const windows=Forecast.rollingWindowProbabilities(values,[2,3,5],[30,100]);
+ assert.equal(windows[0].window,30);assert.equal(windows[0].probabilities[0].successes,30);assert.equal(windows[0].probabilities[0].probability,1);
+ assert.equal(windows[1].window,100);assert.equal(windows[1].probabilities[0].successes,10);assert.equal(windows[1].probabilities[0].probability,.1);
+});
+test("rolling window rates are unavailable instead of zero when there is no data",()=>{
+ const windows=Forecast.rollingWindowProbabilities([], [2], [30,100]);
+ assert.equal(windows[0].window,0);assert.equal(windows[0].probabilities[0].probability,null);
+});
