@@ -57,7 +57,15 @@ async function predictionValues(){
 function rollingStats(values){
  const trend=CrashForecast.recentTrend(values,[30,100],[2,3,5]);
  const names={up:"↑ ارتفاع",down:"↓ انخفاض",flat:"↔ ثابت",insufficient:"مقارنة غير كافية"};
- return trend.map(row=>"آخر "+row.window+" جولة: "+row.rates.map(rate=>rate.threshold+"x "+(rate.currentRate===null?"—":(rate.currentRate*100).toFixed(1)+"%")+" ("+names[rate.direction]+(rate.delta===null?"":", "+(rate.delta>0?"+":"")+(rate.delta*100).toFixed(1)+" نقطة"))).join(" / ")).join(" · ");
+  return trend.map(row=>{
+   const parts=row.rates.map(rate=>{
+    const current=rate.currentRate===null?"—":(rate.currentRate*100).toFixed(1)+"%";
+    const direction=names[rate.direction]||"";
+    const delta=rate.delta===null?"":", "+(rate.delta>0?"+":"")+(rate.delta*100).toFixed(1)+" نقطة";
+    return rate.threshold+"x "+current+" ("+direction+delta+")";
+   });
+   return "آخر "+row.window+" جولة: "+parts.join(" / ");
+  }).join(" · ");
 }
 function showRolling(values){const el=$("rollingStats");if(el){el.textContent=rollingStats(values);el.hidden=false;}}
 
