@@ -20,5 +20,5 @@ test("backtest is chronological and reports baseline and rolling Brier scores",(
  assert.ok(result.results[0].rollingBrier>=0&&result.results[0].rollingBrier<=1);
 });
 test("brier score evaluates probability forecasts against binary outcomes",()=>{
- assert.equal(Forecast.brierScore([.8,.2],[true,false]),.04);
+ assert.ok(Math.abs(Forecast.brierScore([.8,.2],[true,false])-.04)<1e-12);
 });
