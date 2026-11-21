@@ -58,7 +58,7 @@ start.addEventListener("click",async()=>{
   await chrome.storage.local.set({collectorEnabled:true,gameOrigin:origin,gameTabId:tab.id,collectorDiagnostics:{wsCreated:0,wsOpened:0,wsFrames:0,wsMessages:0,roundsCaptured:0}});
   await unregisterGameScripts();
   await chrome.scripting.registerContentScripts([
-   {id:"crash-game-hook",matches:[origin+"/*"],js:["game-hook.js"],runAt:"document_start",world:"MAIN",allFrames:true,persistAcrossSessions:true},
+   {id:"crash-game-hook",matches:[origin+"/*"],js:["sensor-core.js","game-hook.js"],runAt:"document_start",world:"MAIN",allFrames:true,persistAcrossSessions:true},
    {id:"crash-game-bridge",matches:[origin+"/*"],js:["game-bridge.js"],runAt:"document_start",world:"ISOLATED",allFrames:true,persistAcrossSessions:true}
   ]);
   status.textContent="تم الربط. جاري إعادة تحميل صفحة اللعبة لبدء الالتقاط من اتصال WebSocket.";
