@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Crash Predictor — Live Round Collector",
-  "version": "1.6.3",
-  "description": "يلتقط نتائج OnCrash وOnResult من اتصال اللعبة ويرسلها إلى Crash Predictor محليًا.",
+  "version": "1.6.4",
+  "description": "يلتقط نتائج الجولات ويختبر إشارات مراحل اللعبة وتوقيتها داخل المتصفح دون ادعاء توقع مضمون.",
   "permissions": [
     "activeTab",
     "scripting",
