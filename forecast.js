@@ -42,11 +42,21 @@
     });
     return {count:a.length,trainCount:train.length,testCount:test.length,results};
   }
+  function rollingWindowProbabilities(values,thresholds=[2,3,5],windows=[30,100]){
+    const a=clean(values);
+    return windows.map(window=>{
+      const sample=a.slice(-Math.min(window,a.length));
+      return {window:sample.length,requestedWindow:window,probabilities:thresholds.map(threshold=>{
+        const successes=sample.filter(v=>v>=threshold).length;
+        return {threshold,count:sample.length,successes,probability:sample.length?successes/sample.length:null};
+      })};
+    });
+  }
   function forecastNext(values,thresholds=DEFAULT_THRESHOLDS){
     const a=clean(values);
-    return {sampleSize:a.length,probabilities:probabilities(a,thresholds),method:"historical-frequency",warning:"احتمالات وصفية من النتائج السابقة وليست كشفًا أو ضمانًا لنتيجة الجولة القادمة."};
+    return {sampleSize:a.length,probabilities:probabilities(a,thresholds),rollingWindows:rollingWindowProbabilities(a),method:"historical-frequency",warning:"احتمالات وصفية من النتائج السابقة وليست كشفًا أو ضمانًا لنتيجة الجولة القادمة."};
   }
-  const api={clean,wilson,probabilities,brierScore,backtest,forecastNext,DEFAULT_THRESHOLDS};
+  const api={clean,wilson,probabilities,brierScore,backtest,rollingWindowProbabilities,forecastNext,DEFAULT_THRESHOLDS};
   if(typeof module!=="undefined"&&module.exports)module.exports=api;
   root.CrashForecast=api;
 })(typeof window!=="undefined"?window:globalThis);
