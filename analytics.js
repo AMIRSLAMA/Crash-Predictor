@@ -50,7 +50,41 @@
       afterAtOrAbove: { ...groups.afterAtOrAbove, rate: rate(groups.afterAtOrAbove) }
     };
   }
-  const api = { parseMultipliers, median, summarize, buckets, analyzeTransitions };
+  function wilson(successes, total, z = 1.96) {
+    if (!total) return { low: null, high: null };
+    const p = successes / total, z2 = z * z, den = 1 + z2 / total;
+    const center = (p + z2 / (2 * total)) / den;
+    const margin = z * Math.sqrt((p * (1 - p) / total) + z2 / (4 * total * total)) / den;
+    return { low: Math.max(0, center - margin), high: Math.min(1, center + margin) };
+  }
+  function forecast(values, thresholds = [1.5, 2, 3, 5, 10], windowSize = 300) {
+    const a = values.filter(v => Number.isFinite(v) && v >= 1);
+    const sample = a.slice(-Math.max(1, windowSize));
+    return {
+      sampleSize: sample.length,
+      median: median(sample),
+      mean: sample.length ? sample.reduce((s, v) => s + v, 0) / sample.length : 0,
+      thresholds: thresholds.map(threshold => {
+        const successes = sample.filter(v => v >= threshold).length;
+        const ci = wilson(successes, sample.length);
+        return { threshold, successes, total: sample.length, rate: sample.length ? successes / sample.length : null, low: ci.low, high: ci.high };
+      })
+    };
+  }
+  function backtest(values, trainFraction = 0.8, thresholds = [1.5, 2, 3, 5, 10]) {
+    const a = values.filter(v => Number.isFinite(v) && v >= 1);
+    const split = Math.max(1, Math.min(a.length - 1, Math.floor(a.length * trainFraction)));
+    if (a.length < 2 || split < 1 || split >= a.length) return { trainSize: split, testSize: 0, rows: [] };
+    const train = a.slice(0, split), test = a.slice(split);
+    return { trainSize: train.length, testSize: test.length, rows: thresholds.map(threshold => {
+      const hits = train.filter(v => v >= threshold).length;
+      const p = hits / train.length;
+      const testHits = test.filter(v => v >= threshold).length;
+      const brier = test.reduce((sum, value) => sum + (Number(value >= threshold) - p) ** 2, 0) / test.length;
+      return { threshold, trainRate: p, testRate: testHits / test.length, brier, trainHits: hits, testHits };
+    }) };
+  }
+  const api = { parseMultipliers, median, summarize, buckets, analyzeTransitions, wilson, forecast, backtest };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   root.CrashAnalytics = api;
 })(typeof window !== "undefined" ? window : globalThis);
