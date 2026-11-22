@@ -32,18 +32,17 @@ table{width:100%;border-collapse:collapse}th,td{text-align:right;padding:11px;bo
 <div class="stat"><span>جولات مسجلة</span><strong id="saved">0</strong></div>
 </section>
 <section class="panel" style="margin:16px 0;border-color:#80652e">
-<h3>إنذار زمني تجريبي</h3>
-<p class="warning">اضبط وقت التحذير أثناء الجولة. هذا تنبيه بمرور الوقت فقط، وليس توقعًا لموعد الانفجار.</p>
-<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
-<label for="warnSeconds">تحذير أصفر بعد (ثانية):</label><input id="warnSeconds" type="number" min="2" max="300" value="8" style="width:82px;padding:10px;border-radius:8px;background:#111d2e;color:#fff;border:1px solid #53657c">
-<label for="dangerSeconds">تحذير أحمر بعد (ثانية):</label><input id="dangerSeconds" type="number" min="3" max="600" value="12" style="width:82px;padding:10px;border-radius:8px;background:#111d2e;color:#fff;border:1px solid #53657c">
-<strong id="warningState" style="color:#91a4bd">بانتظار الجولة</strong></div></section>
+<h3>محلل رسائل اللعبة وتوقيتها</h3>
+<p class="warning">يسجل المحلل أسماء أحداث SignalR المعروفة ووقت وصولها والفاصل بين الرسائل وعمر الجولة وقت الاستلام. لا يصدر إنذارًا تنبؤيًا قبل إثبات وجود نمط مبكر متكرر.</p>
+<div class="muted">الرسائل المعروضة: <strong id="messageCount">0</strong> · لا يتم حفظ محتوى الرسائل الخام أو بيانات الحساب.</div>
+<div style="overflow-x:auto;margin-top:12px"><table><thead><tr><th>الحدث</th><th>رقم الجولة</th><th>الفاصل عن السابق</th><th>من بداية الجولة</th><th>وقت الاستلام</th></tr></thead><tbody id="messageLog"><tr><td colspan="5" class="muted">في انتظار رسائل SignalR معروفة…</td></tr></tbody></table></div>
+</section>
 <section class="row">
 <div class="panel"><h3>حالة الجولة الحالية</h3><p id="roundState" class="status">في انتظار بيانات اللعبة…</p><p id="lastEvent" class="muted">آخر حدث: لا يوجد</p><p id="lastActivity" class="muted">آخر نشاط: —</p><p id="connectionStatus" class="warning">حالة الربط: لم يتم فتح نافذة اللعبة</p></div>
 <div class="panel"><h3>مؤشر الرحلة</h3><p class="warning">البرنامج لا يستطيع معرفة المضاعف النهائي قبل إعلانه. أي إنذار مبكر لن يُفعّل إلا إذا اكتشفنا إشارة تصل قبل الانفجار واختبرناها على جولات مستقلة.</p></div>
 </section>
 <section class="panel" style="margin-top:16px"><h3>سجل الانفجارات المستلمة</h3><table><thead><tr><th>رقم الجولة</th><th>المضاعف المعلن</th><th>وقت الاستلام</th></tr></thead><tbody id="rounds"><tr><td colspan="3" class="muted">لا توجد جولات مسجلة بعد</td></tr></tbody></table></section>
 </main>
-<footer>الخصوصية: لا يحفظ البرنامج رسائل الشبكة الخام أو كلمات المرور أو ملفات تعريف الارتباط. يحفظ فقط رقم الجولة والمضاعف ووقت الحدث في ذاكرة الجلسة. تسجيل النتائج لا يعني التنبؤ بالنتيجة.</footer>
+<footer>الخصوصية: لا يحفظ البرنامج رسائل الشبكة الخام أو كلمات المرور أو ملفات تعريف الارتباط. يعرض بيانات وصفية لأحداث SignalR المعروفة وتوقيتها داخل ذاكرة الجلسة. تسجيل النتائج لا يعني التنبؤ بالنتيجة.</footer>
 <script src="renderer.js"></script>
 </body></html>
