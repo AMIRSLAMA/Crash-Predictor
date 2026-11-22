@@ -1,5 +1,11 @@
 const el = id => document.getElementById(id);
 el('openGame').addEventListener('click', () => window.flight.openGame());
+el('exportEvents')?.addEventListener('click', async () => {
+  const result = await window.flight.exportEvents();
+  if (!result?.canceled) {
+    el('exportEvents').textContent = 'تم تصدير ' + result.count + ' رسالة';
+  }
+});
 
 const plane = document.querySelector('.plane');
 const motionStyle = document.createElement('style');
