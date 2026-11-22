@@ -22,7 +22,7 @@ table{width:100%;border-collapse:collapse}th,td{text-align:right;padding:11px;bo
 </style>
 </head>
 <body>
-<header><div><h1>✈ CRASH FLIGHT</h1><small>STANDALONE DESKTOP MONITOR</small></div><button id="openGame">فتح نافذة اللعبة</button></header>
+<header><div><h1>✈ CRASH FLIGHT</h1><small>STANDALONE DESKTOP MONITOR</small></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button id="exportEvents" style="background:#6d91c4;color:#07111e">تصدير سجل الرسائل</button><button id="openGame">فتح نافذة اللعبة</button></div></header>
 <main>
 <section class="hero"><div><h2>مراقبة الرحلة المباشرة</h2><p>البرنامج يراقب أحداث WebSocket داخل نافذة اللعبة المدمجة، ويسجل أحداث بداية الجولة والانفجار عند وصولها.</p><div id="planeState">الطيارة على أرض المطار · في انتظار الجولة</div></div><div class="plane">✈️</div></section>
 <section class="stats">
@@ -34,15 +34,15 @@ table{width:100%;border-collapse:collapse}th,td{text-align:right;padding:11px;bo
 <section class="panel" style="margin:16px 0;border-color:#80652e">
 <h3>محلل رسائل اللعبة وتوقيتها</h3>
 <p class="warning">يسجل المحلل أسماء أحداث SignalR المعروفة ووقت وصولها والفاصل بين الرسائل وعمر الجولة وقت الاستلام. لا يصدر إنذارًا تنبؤيًا قبل إثبات وجود نمط مبكر متكرر.</p>
-<div class="muted">الرسائل المعروضة: <strong id="messageCount">0</strong> · لا يتم حفظ محتوى الرسائل الخام أو بيانات الحساب.</div>
+<div class="muted">الرسائل المعروضة: <strong id="messageCount">0</strong> · الأرشيف محفوظ محليًا ويحتوي أسماء الأحداث وتوقيتها ورقم الجولة ومرحلتها فقط؛ لا يحتوي محتوى الرسائل أو بيانات الحساب.</div>
 <div style="overflow-x:auto;margin-top:12px"><table><thead><tr><th>الحدث</th><th>رقم الجولة</th><th>الفاصل عن السابق</th><th>من بداية الجولة</th><th>وقت الاستلام</th></tr></thead><tbody id="messageLog"><tr><td colspan="5" class="muted">في انتظار رسائل SignalR معروفة…</td></tr></tbody></table></div>
 </section>
 <section class="row">
 <div class="panel"><h3>حالة الجولة الحالية</h3><p id="roundState" class="status">في انتظار بيانات اللعبة…</p><p id="lastEvent" class="muted">آخر حدث: لا يوجد</p><p id="lastActivity" class="muted">آخر نشاط: —</p><p id="connectionStatus" class="warning">حالة الربط: لم يتم فتح نافذة اللعبة</p></div>
-<div class="panel"><h3>مؤشر الرحلة</h3><p class="warning">البرنامج لا يستطيع معرفة المضاعف النهائي قبل إعلانه. أي إنذار مبكر لن يُفعّل إلا إذا اكتشفنا إشارة تصل قبل الانفجار واختبرناها على جولات مستقلة.</p></div>
+<div class="panel"><h3>مؤشر الرحلة</h3><p class="warning">لا يوجد إنذار تنبؤي مفعّل حاليًا. الأرشيف الجديد سيجمع تسلسل الرسائل وتوقيتها عبر الجولات حتى نختبر أي علامة محتملة على جولات منفصلة، ونحسب زمن التقدم والإنذارات الخاطئة قبل تفعيلها.</p></div>
 </section>
 <section class="panel" style="margin-top:16px"><h3>سجل الانفجارات المستلمة</h3><table><thead><tr><th>رقم الجولة</th><th>المضاعف المعلن</th><th>وقت الاستلام</th></tr></thead><tbody id="rounds"><tr><td colspan="3" class="muted">لا توجد جولات مسجلة بعد</td></tr></tbody></table></section>
 </main>
-<footer>الخصوصية: لا يحفظ البرنامج رسائل الشبكة الخام أو كلمات المرور أو ملفات تعريف الارتباط. يعرض بيانات وصفية لأحداث SignalR المعروفة وتوقيتها داخل ذاكرة الجلسة. تسجيل النتائج لا يعني التنبؤ بالنتيجة.</footer>
+<footer>الخصوصية: يحفظ البرنامج محليًا بيانات وصفية لأحداث SignalR: اسم الحدث والتوقيت ورقم الجولة ورمز المرحلة فقط. لا يحفظ إطارات الشبكة الخام أو كلمات المرور أو Cookies أو Tokens. تسجيل الأحداث لا يعني التنبؤ بالنتيجة.</footer>
 <script src="renderer.js"></script>
 </body></html>
