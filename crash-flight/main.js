@@ -1,9 +1,19 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('node:path');
+const fs = require('node:fs');
+const { dialog } = require('electron');
 const { parseSignalRFrame } = require('./signalr-parser');
 
 let dashboard = null;
 let gameWindow = null;
+let archivePath = null;
+const eventArchive = [];
+function persistEventArchive() {
+  if (!archivePath) return;
+  try {
+    fs.writeFileSync(archivePath, JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), events: eventArchive.slice(-50000) }, null, 2), 'utf8');
+  } catch (err) { console.error('[CRASH FLIGHT] Could not persist event archive:', err); }
+}
 const GAME_URL = 'https://eg1xbet.com';
 
 const state = {
@@ -48,13 +58,19 @@ function handleGameEvent(target, args) {
   state.stats.signalrEvents += 1;
   state.stats.lastEvent = target;
   state.stats.lastActivity = now;
-  state.messageLog.push({
+  const eventRecord = {
     target,
     receivedAt: now,
+    receivedAtMs: receivedAt,
     gapMs: previousAt == null ? null : receivedAt - previousAt,
     roundElapsedMs: state.currentRound?.startedAt ? receivedAt - Date.parse(state.currentRound.startedAt) : null,
-    roundId: roundId ?? state.currentRound?.roundId ?? null
-  });
+    roundId: roundId ?? state.currentRound?.roundId ?? null,
+    stage: Number.isFinite(data.s) ? data.s : null
+  };
+  state.messageLog.push(eventRecord);
+  eventArchive.push(eventRecord);
+  if (eventArchive.length > 50000) eventArchive.shift();
+  persistEventArchive();
   if (state.messageLog.length > 100) state.messageLog.shift();
 
   if (target === 'OnStart') {
@@ -202,12 +218,29 @@ ipcMain.handle('flight:get-state', () => ({
   stats: { ...state.stats },
   messageLog: state.messageLog.slice(-30)
 }));
+ipcMain.handle('flight:export-events', async () => {
+  const result = await dialog.showSaveDialog(dashboard, {
+    title: 'تصدير سجل رسائل CRASH FLIGHT',
+    defaultPath: 'crash-flight-events.json',
+    filters: [{ name: 'JSON', extensions: ['json'] }]
+  });
+  if (result.canceled || !result.filePath) return { canceled: true };
+  fs.writeFileSync(result.filePath, JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), events: eventArchive }, null, 2), 'utf8');
+  return { canceled: false, count: eventArchive.length };
+});
 ipcMain.handle('flight:open-game', () => {
   openGameWindow();
   return true;
 });
 
 app.whenReady().then(() => {
+  archivePath = path.join(app.getPath('userData'), 'crash-flight-events.json');
+  try {
+    if (fs.existsSync(archivePath)) {
+      const saved = JSON.parse(fs.readFileSync(archivePath, 'utf8'));
+      if (Array.isArray(saved.events)) eventArchive.push(...saved.events.slice(-50000));
+    }
+  } catch (err) { console.error('[CRASH FLIGHT] Could not load event archive:', err); }
   createDashboard();
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createDashboard();
