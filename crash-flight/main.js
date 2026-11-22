@@ -9,6 +9,8 @@ const GAME_URL = 'https://eg1xbet.com';
 const state = {
   rounds: [],
   currentRound: null,
+  messageLog: [],
+  lastSignalAt: null,
   stats: {
     wsConnections: 0,
     wsFrames: 0,
@@ -25,7 +27,8 @@ function publish() {
   dashboard.webContents.send('flight:state', {
     rounds: state.rounds.slice(-100),
     currentRound: state.currentRound ? { ...state.currentRound } : null,
-    stats: { ...state.stats }
+    stats: { ...state.stats },
+    messageLog: state.messageLog.slice(-30)
   });
 }
 
@@ -39,9 +42,20 @@ function handleGameEvent(target, args) {
   const roundId = data.l ?? data.roundId ?? data.round ?? null;
   const now = new Date().toISOString();
 
+  const receivedAt = Date.now();
+  const previousAt = state.lastSignalAt;
+  state.lastSignalAt = receivedAt;
   state.stats.signalrEvents += 1;
   state.stats.lastEvent = target;
   state.stats.lastActivity = now;
+  state.messageLog.push({
+    target,
+    receivedAt: now,
+    gapMs: previousAt == null ? null : receivedAt - previousAt,
+    roundElapsedMs: state.currentRound?.startedAt ? receivedAt - Date.parse(state.currentRound.startedAt) : null,
+    roundId: roundId ?? state.currentRound?.roundId ?? null
+  });
+  if (state.messageLog.length > 100) state.messageLog.shift();
 
   if (target === 'OnStart') {
     state.currentRound = {
@@ -185,7 +199,8 @@ function createDashboard() {
 ipcMain.handle('flight:get-state', () => ({
   rounds: state.rounds.slice(-100),
   currentRound: state.currentRound ? { ...state.currentRound } : null,
-  stats: { ...state.stats }
+  stats: { ...state.stats },
+  messageLog: state.messageLog.slice(-30)
 }));
 ipcMain.handle('flight:open-game', () => {
   openGameWindow();
