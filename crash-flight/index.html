@@ -31,6 +31,13 @@ table{width:100%;border-collapse:collapse}th,td{text-align:right;padding:11px;bo
 <div class="stat"><span>أحداث SignalR</span><strong id="events">0</strong></div>
 <div class="stat"><span>جولات مسجلة</span><strong id="saved">0</strong></div>
 </section>
+<section class="panel" style="margin:16px 0;border-color:#80652e">
+<h3>إنذار زمني تجريبي</h3>
+<p class="warning">اضبط وقت التحذير أثناء الجولة. هذا تنبيه بمرور الوقت فقط، وليس توقعًا لموعد الانفجار.</p>
+<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+<label for="warnSeconds">تحذير أصفر بعد (ثانية):</label><input id="warnSeconds" type="number" min="2" max="300" value="8" style="width:82px;padding:10px;border-radius:8px;background:#111d2e;color:#fff;border:1px solid #53657c">
+<label for="dangerSeconds">تحذير أحمر بعد (ثانية):</label><input id="dangerSeconds" type="number" min="3" max="600" value="12" style="width:82px;padding:10px;border-radius:8px;background:#111d2e;color:#fff;border:1px solid #53657c">
+<strong id="warningState" style="color:#91a4bd">بانتظار الجولة</strong></div></section>
 <section class="row">
 <div class="panel"><h3>حالة الجولة الحالية</h3><p id="roundState" class="status">في انتظار بيانات اللعبة…</p><p id="lastEvent" class="muted">آخر حدث: لا يوجد</p><p id="lastActivity" class="muted">آخر نشاط: —</p><p id="connectionStatus" class="warning">حالة الربط: لم يتم فتح نافذة اللعبة</p></div>
 <div class="panel"><h3>مؤشر الرحلة</h3><p class="warning">البرنامج لا يستطيع معرفة المضاعف النهائي قبل إعلانه. أي إنذار مبكر لن يُفعّل إلا إذا اكتشفنا إشارة تصل قبل الانفجار واختبرناها على جولات مستقلة.</p></div>
