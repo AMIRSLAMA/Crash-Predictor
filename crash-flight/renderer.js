@@ -13,6 +13,35 @@ motionStyle.textContent = `
 }`;
 document.head.appendChild(motionStyle);
 let lastCrashKey = null;
+let activeRoundStart = null, warningLevel = 0, audioContext = null;
+function playWarningTone(level) {
+  try {
+    audioContext ||= new (window.AudioContext || window.webkitAudioContext)();
+    const osc=audioContext.createOscillator(), gain=audioContext.createGain();
+    osc.connect(gain); gain.connect(audioContext.destination);
+    osc.frequency.value=level===2?960:620;
+    gain.gain.setValueAtTime(.0001,audioContext.currentTime);
+    gain.gain.exponentialRampToValueAtTime(.16,audioContext.currentTime+.03);
+    gain.gain.exponentialRampToValueAtTime(.0001,audioContext.currentTime+.32);
+    osc.start(); osc.stop(audioContext.currentTime+.34);
+  } catch (_) {}
+}
+function resetWarning() {
+  activeRoundStart=null; warningLevel=0;
+  const n=el('warningState'); if(n){n.textContent='بانتظار الجولة';n.style.color='#91a4bd';}
+}
+setInterval(()=>{
+  if(!activeRoundStart)return;
+  const elapsed=(Date.now()-activeRoundStart)/1000;
+  const yellow=Math.max(2,Number(el('warnSeconds')?.value)||8);
+  const red=Math.max(yellow+1,Number(el('dangerSeconds')?.value)||12);
+  const level=elapsed>=red?2:elapsed>=yellow?1:0;
+  if(level>warningLevel){warningLevel=level;playWarningTone(level);}
+  const n=el('warningState'); if(n){
+    n.textContent=level===2?'🔴 تحذير زمني أحمر · '+elapsed.toFixed(1)+' ث':level===1?'🟡 تحذير زمني أصفر · '+elapsed.toFixed(1)+' ث':'🟢 الجولة جارية · '+elapsed.toFixed(1)+' ث';
+    n.style.color=level===2?'#ff6969':level===1?'#f0c66c':'#75d6a0';
+  }
+},200);
 
 function render(state) {
   const s = state.stats || {};
@@ -31,11 +60,14 @@ function render(state) {
     : 'في انتظار بداية أول جولة…';
 
   if (current?.status === 'جارية') {
+    const started = current.startedAt ? Date.parse(current.startedAt) : NaN;
+    if (Number.isFinite(started) && activeRoundStart !== started) { activeRoundStart = started; warningLevel = 0; }
     plane.classList.remove('explode');
     plane.classList.add('flying');
     plane.style.opacity = '1';
     el('planeState').textContent = '✈️ الطيارة في الجو · الجولة ' + (current.roundId ?? '');
   } else if (current?.status === 'انتهت') {
+    resetWarning();
     plane.classList.remove('flying');
     const crashKey = String(current.roundId ?? '') + ':' + String(current.crashedAt ?? '');
     if (crashKey !== lastCrashKey) {
@@ -47,6 +79,7 @@ function render(state) {
     }
     el('planeState').textContent = '💥 تم تشغيل الانفجار بعد استلام حدث نهاية الجولة';
   } else {
+    resetWarning();
     plane.classList.remove('flying', 'explode');
     plane.style.opacity = '1';
     el('planeState').textContent = 'الطيارة على أرض المطار · افتح اللعبة لبدء المراقبة';
