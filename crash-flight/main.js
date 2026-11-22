@@ -39,7 +39,7 @@ function median(values) {
   return sorted.length % 2 ? sorted[mid] : (sorted[mid-1] + sorted[mid]) / 2;
 }
 function getInsights() {
-  const completed = state.rounds.filter(r => Number.isFinite(Number(r.multiplier)));
+  const completed = state.rounds.filter(r => r.multiplier != null && r.multiplier !== '' && Number.isFinite(Number(r.multiplier)));
   const recent = completed.slice(-30).map(r => Number(r.multiplier));
   const estimate = recent.length >= 5 ? median(recent) : null;
   const byRound = new Map();
