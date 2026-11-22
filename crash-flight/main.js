@@ -283,6 +283,14 @@ app.whenReady().then(() => {
         state.stats.signalrEvents = eventArchive.length;
         state.stats.lastEvent = state.messageLog.at(-1)?.target || 'لا يوجد';
         state.stats.lastActivity = state.messageLog.at(-1)?.receivedAt || null;
+        const restored = new Map();
+        for (const event of eventArchive) {
+          if ((event.target === 'OnCrash' || event.target === 'OnResult') && event.roundId != null) {
+            restored.set(String(event.roundId), { roundId:event.roundId, crashedAt:event.receivedAt, multiplier:null, status:'انتهت' });
+          }
+        }
+        state.rounds.push(...[...restored.values()].slice(-100));
+        state.stats.saved = state.rounds.length;
       }
     }
   } catch (err) { console.error('[CRASH FLIGHT] Could not load event archive:', err); }
