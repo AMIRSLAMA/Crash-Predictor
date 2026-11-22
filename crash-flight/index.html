@@ -24,12 +24,16 @@ table{width:100%;border-collapse:collapse}th,td{text-align:right;padding:11px;bo
 <body>
 <header><div><h1>✈ CRASH FLIGHT</h1><small>STANDALONE DESKTOP MONITOR</small></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button id="exportEvents" style="background:#6d91c4;color:#07111e">تصدير سجل الرسائل</button><button id="openGame">فتح نافذة اللعبة</button></div></header>
 <main>
-<section class="hero"><div><h2>مراقبة الرحلة المباشرة</h2><p>البرنامج يراقب أحداث WebSocket داخل نافذة اللعبة المدمجة، ويسجل أحداث بداية الجولة والانفجار عند وصولها.</p><div id="planeState">الطيارة على أرض المطار · في انتظار الجولة</div></div><div class="plane">✈️</div></section>
+<section class="hero"><div><h2>مراقبة الرحلة المباشرة · تتبع حي وتحليل إحصائي</h2><p>البرنامج يراقب أحداث WebSocket داخل نافذة اللعبة المدمجة، ويسجل أحداث بداية الجولة والانفجار عند وصولها.</p><div id="planeState">الطيارة على أرض المطار · في انتظار الجولة</div></div><div class="plane">✈️</div></section>
 <section class="stats">
 <div class="stat"><span>اتصالات WebSocket</span><strong id="connections">0</strong></div>
 <div class="stat"><span>إطارات مستلمة</span><strong id="frames">0</strong></div>
 <div class="stat"><span>أحداث SignalR</span><strong id="events">0</strong></div>
 <div class="stat"><span>جولات مسجلة</span><strong id="saved">0</strong></div>
+</section>
+<section class="row" style="margin:16px 0">
+<div class="panel"><h3>تقدير الجولة القادمة</h3><div id="nextEstimate" style="font-size:42px;color:#f5d77e;font-weight:800">—</div><p id="estimateMeta" class="muted">في انتظار تسجيل 5 جولات على الأقل</p><small>وسيط آخر 30 جولة مسجلة؛ ليس ضمانًا لنتيجة الجولة.</small></div>
+<div class="panel"><h3>مؤشر متابعة الانفجار</h3><div id="proximity" style="font-size:22px;color:#91a4bd;font-weight:700">لا توجد علامة مبكرة مثبتة</div><p id="proximityMeta" class="warning">يبحث في مراحل OnStage المسجلة سابقًا. لن يظهر تنبيه إلا عند تكرار نمط زمني في 5 جولات على الأقل.</p></div>
 </section>
 <section class="panel" style="margin:16px 0;border-color:#80652e">
 <h3>محلل رسائل اللعبة وتوقيتها</h3>
