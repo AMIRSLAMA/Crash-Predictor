@@ -238,7 +238,13 @@ app.whenReady().then(() => {
   try {
     if (fs.existsSync(archivePath)) {
       const saved = JSON.parse(fs.readFileSync(archivePath, 'utf8'));
-      if (Array.isArray(saved.events)) eventArchive.push(...saved.events.slice(-50000));
+      if (Array.isArray(saved.events)) {
+        eventArchive.push(...saved.events.slice(-50000));
+        state.messageLog.push(...eventArchive.slice(-30));
+        state.stats.signalrEvents = eventArchive.length;
+        state.stats.lastEvent = state.messageLog.at(-1)?.target || 'لا يوجد';
+        state.stats.lastActivity = state.messageLog.at(-1)?.receivedAt || null;
+      }
     }
   } catch (err) { console.error('[CRASH FLIGHT] Could not load event archive:', err); }
   createDashboard();
