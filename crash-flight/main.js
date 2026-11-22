@@ -32,13 +32,52 @@ const state = {
   }
 };
 
+function median(values) {
+  const sorted = values.filter(Number.isFinite).slice().sort((a,b)=>a-b);
+  if (!sorted.length) return null;
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[mid] : (sorted[mid-1] + sorted[mid]) / 2;
+}
+function getInsights() {
+  const completed = state.rounds.filter(r => Number.isFinite(Number(r.multiplier)));
+  const recent = completed.slice(-30).map(r => Number(r.multiplier));
+  const estimate = recent.length >= 5 ? median(recent) : null;
+  const byRound = new Map();
+  for (const e of eventArchive) {
+    if (!e.roundId) continue;
+    if (!byRound.has(String(e.roundId))) byRound.set(String(e.roundId), []);
+    byRound.get(String(e.roundId)).push(e);
+  }
+  const stageLeads = new Map();
+  for (const [id, events] of byRound) {
+    const crash = events.find(e => e.target === 'OnCrash' || e.target === 'OnResult');
+    if (!crash || !Number.isFinite(crash.receivedAtMs)) continue;
+    const stages = events.filter(e => e.target === 'OnStage' && Number.isFinite(e.stage) && Number.isFinite(e.receivedAtMs) && e.receivedAtMs < crash.receivedAtMs);
+    const last = stages.at(-1);
+    if (!last) continue;
+    const lead = (crash.receivedAtMs - last.receivedAtMs) / 1000;
+    if (!stageLeads.has(last.stage)) stageLeads.set(last.stage, []);
+    stageLeads.get(last.stage).push(lead);
+  }
+  const candidates = [...stageLeads.entries()].map(([stage, leads]) => ({stage, leads, count:leads.length, med:median(leads)})).filter(x=>x.count>=5 && x.med!==null && x.med<=5);
+  candidates.sort((a,b)=>b.count-a.count);
+  const candidate = candidates[0] || null;
+  return {
+    estimate, sampleSize: recent.length,
+    alert: state.currentRound?.status === 'جارية' && candidate && Number.isFinite(state.currentRound.lastStage) && state.currentRound.lastStage === candidate.stage
+      ? {level:'candidate', stage:candidate.stage, samples:candidate.count, leadSeconds:Number(candidate.med.toFixed(1))}
+      : null,
+    candidate: candidate ? {stage:candidate.stage, samples:candidate.count, leadSeconds:Number(candidate.med.toFixed(1))} : null
+  };
+}
+
 function publish() {
   if (!dashboard || dashboard.isDestroyed()) return;
   dashboard.webContents.send('flight:state', {
     rounds: state.rounds.slice(-100),
     currentRound: state.currentRound ? { ...state.currentRound } : null,
     stats: { ...state.stats },
-    messageLog: state.messageLog.slice(-30)
+    messageLog: state.messageLog.slice(-30), insights: getInsights()
   });
 }
 
@@ -82,7 +121,7 @@ function handleGameEvent(target, args) {
       crashedAt: null
     };
   } else if (target === 'OnStage') {
-    if (state.currentRound) state.currentRound.lastStageAt = now;
+    if (state.currentRound) { state.currentRound.lastStageAt = now; state.currentRound.lastStage = Number.isFinite(data.s) ? data.s : null; }
   } else if (target === 'OnCrash' || target === 'OnResult') {
     const resolvedRoundId = roundId ?? state.currentRound?.roundId ?? null;
     const result = {
@@ -216,7 +255,7 @@ ipcMain.handle('flight:get-state', () => ({
   rounds: state.rounds.slice(-100),
   currentRound: state.currentRound ? { ...state.currentRound } : null,
   stats: { ...state.stats },
-  messageLog: state.messageLog.slice(-30)
+  messageLog: state.messageLog.slice(-30), insights: getInsights()
 }));
 ipcMain.handle('flight:export-events', async () => {
   const result = await dialog.showSaveDialog(dashboard, {
