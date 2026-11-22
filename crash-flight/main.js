@@ -104,7 +104,8 @@ function handleGameEvent(target, args) {
     gapMs: previousAt == null ? null : receivedAt - previousAt,
     roundElapsedMs: state.currentRound?.startedAt ? receivedAt - Date.parse(state.currentRound.startedAt) : null,
     roundId: roundId ?? state.currentRound?.roundId ?? null,
-    stage: Number.isFinite(data.s) ? data.s : null
+    stage: Number.isFinite(data.s) ? data.s : null,
+    multiplier: (target === 'OnCrash' || target === 'OnResult') ? (data.f ?? data.multiplier ?? null) : null
   };
   state.messageLog.push(eventRecord);
   eventArchive.push(eventRecord);
@@ -286,7 +287,7 @@ app.whenReady().then(() => {
         const restored = new Map();
         for (const event of eventArchive) {
           if ((event.target === 'OnCrash' || event.target === 'OnResult') && event.roundId != null) {
-            restored.set(String(event.roundId), { roundId:event.roundId, crashedAt:event.receivedAt, multiplier:null, status:'انتهت' });
+            restored.set(String(event.roundId), { roundId:event.roundId, crashedAt:event.receivedAt, multiplier:event.multiplier ?? null, status:'انتهت' });
           }
         }
         state.rounds.push(...[...restored.values()].slice(-100));
