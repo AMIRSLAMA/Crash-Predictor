@@ -30,6 +30,23 @@ function render(state) {
   const connection = el('connectionStatus');
   if (connection) connection.textContent = 'حالة الربط: ' + (s.connectionStatus || 'غير معروف');
 
+  const insight = state.insights || {};
+  const estimateNode = el('nextEstimate');
+  if (estimateNode) estimateNode.textContent = insight.estimate == null ? '—' : Number(insight.estimate).toFixed(2) + 'x';
+  const estimateMeta = el('estimateMeta');
+  if (estimateMeta) estimateMeta.textContent = insight.sampleSize >= 5 ? 'مبني على ' + insight.sampleSize + ' جولة حديثة · وسيط المضاعفات' : 'نحتاج ' + Math.max(0,5-(insight.sampleSize||0)) + ' جولات إضافية على الأقل';
+  const proximity = el('proximity'), proximityMeta = el('proximityMeta');
+  if (proximity) {
+    if (insight.alert) {
+      proximity.textContent = 'علامة مرحلة متكررة · ليست تأكيدًا';
+      proximity.style.color = '#f0c66c';
+      if (proximityMeta) proximityMeta.textContent = 'المرحلة ' + insight.alert.stage + ' ظهرت في ' + insight.alert.samples + ' جولات سابقة؛ وسيط الزمن حتى الانفجار ' + insight.alert.leadSeconds + ' ثانية. النمط تاريخي وقد لا يتكرر.';
+    } else {
+      proximity.textContent = state.currentRound?.status === 'جارية' ? 'لا توجد علامة مبكرة مطابقة الآن' : 'في انتظار جولة جارية';
+      proximity.style.color = '#91a4bd';
+      if (proximityMeta) proximityMeta.textContent = insight.candidate ? 'النمط المرشح: مرحلة ' + insight.candidate.stage + ' من ' + insight.candidate.samples + ' جولات؛ لم تظهر المطابقة في المرحلة الحالية.' : 'لا يوجد حتى الآن نمط مرحلة متكرر كافٍ لإظهار تحذير.';
+    }
+  }
   const current = state.currentRound;
   const messageLog = state.messageLog || [];
   const logNode = el('messageLog');
