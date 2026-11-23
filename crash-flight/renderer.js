@@ -19,6 +19,7 @@ motionStyle.textContent = `
 }`;
 document.head.appendChild(motionStyle);
 let lastCrashKey = null;
+let activeRoundForTimer = null;
 function render(state) {
   const s = state.stats || {};
   el('connections').textContent = s.wsConnections ?? 0;
@@ -48,6 +49,7 @@ function render(state) {
     }
   }
   const current = state.currentRound;
+  activeRoundForTimer = current;
   const messageLog = state.messageLog || [];
   const logNode = el('messageLog');
   if (logNode) {
@@ -98,3 +100,15 @@ window.flight.getState().then(render).catch(err => {
   el('roundState').textContent = 'تعذر قراءة حالة البرنامج: ' + err.message;
 });
 window.flight.onState(render);
+
+setInterval(() => {
+  const node = el('roundTimer');
+  if (!node) return;
+  if (!activeRoundForTimer || activeRoundForTimer.status !== 'جارية' || !activeRoundForTimer.startedAt) {
+    node.textContent = 'زمن الجولة: —';
+    return;
+  }
+  const elapsed = Math.max(0, Date.now() - Date.parse(activeRoundForTimer.startedAt));
+  const seconds = elapsed / 1000;
+  node.textContent = 'زمن الجولة: ' + seconds.toFixed(1) + ' ثانية';
+}, 200);
