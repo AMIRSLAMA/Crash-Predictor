@@ -6,47 +6,41 @@
 <title>CRASH FLIGHT</title>
 <style>
 :root{color-scheme:dark;font-family:Segoe UI,Tahoma,sans-serif;background:#070b14;color:#edf4ff}
-*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% -15%,#18365c 0,transparent 55%),#070b14}
-header{padding:22px 28px;border-bottom:1px solid #22324a;display:flex;align-items:center;justify-content:space-between}
-h1{margin:0;letter-spacing:3px;font-size:26px;color:#e8c66a}small,.muted{color:#91a4bd}
-main{padding:24px;max-width:1200px;margin:auto}.hero{border:1px solid #29415f;border-radius:18px;background:linear-gradient(120deg,#101e32,#0b1220);padding:26px;display:flex;align-items:center;justify-content:space-between;min-height:190px;overflow:hidden}
-.plane{display:inline-block;font-size:82px;filter:drop-shadow(0 0 18px #65baff);transform-origin:center}.plane.flying{animation:flyPath 2.4s ease-in-out infinite alternate}@keyframes flyPath{0%{transform:translate(-10px,12px) rotate(-4deg)}100%{transform:translate(18px,-22px) rotate(4deg)}}
-.hero h2{margin:0 0 8px;font-size:24px}.hero p{color:#a8bad0;margin:0;max-width:600px;line-height:1.8}
-button{border:0;border-radius:10px;padding:12px 18px;background:#e8c66a;color:#101522;font-weight:700;cursor:pointer}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:18px 0}.stat,.panel{background:#0e1726;border:1px solid #20334c;border-radius:14px;padding:18px}
-.stat span{display:block;color:#91a4bd;font-size:13px}.stat strong{display:block;font-size:25px;margin-top:8px;color:#f5d77e;direction:ltr;text-align:right}
-.row{display:flex;gap:16px}.panel{flex:1;min-width:0}.panel h3{margin:0 0 14px}.status{color:#75d6a0}.warning{color:#f0c66c;line-height:1.8}
-table{width:100%;border-collapse:collapse}th,td{text-align:right;padding:11px;border-bottom:1px solid #20334c}th{color:#91a4bd;font-size:13px}
-#planeState{font-size:19px;color:#f5d77e}footer{padding:20px 28px;color:#8295ad;font-size:12px;line-height:1.8}
-@media(max-width:800px){.stats{grid-template-columns:repeat(2,1fr)}.row{flex-direction:column}.hero{gap:12px}.plane{font-size:55px}}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 50% -15%,#18365c 0,transparent 55%),#070b14}
+header{padding:14px 20px;border-bottom:1px solid #22324a;display:flex;align-items:center;justify-content:space-between;gap:12px}
+h1{margin:0;letter-spacing:2px;font-size:18px;color:#e8c66a}header small{display:none}
+main{padding:18px;max-width:none;margin:0;min-height:calc(100vh - 58px);display:flex;align-items:center;justify-content:center}
+#patternPanel{width:min(760px,100%);min-height:55vh;background:linear-gradient(145deg,#101e32,#0b1220);border:1px solid #29415f;border-radius:24px;padding:clamp(22px,5vw,54px);display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;box-shadow:0 20px 80px #0006}
+#patternPanel h2{margin:0 0 26px;font-size:clamp(22px,4vw,32px);color:#e8c66a}
+#proximity{font-size:clamp(22px,4.4vw,38px)!important;font-weight:800!important;color:#91a4bd;line-height:1.5}
+#proximityMeta{margin:18px 0 0;font-size:15px;color:#91a4bd;line-height:1.9}
+#connectionStatus{margin:28px 0 0;font-size:13px;color:#75d6a0}
+button{border:0;border-radius:9px;padding:10px 14px;background:#e8c66a;color:#101522;font-weight:700;cursor:pointer}
+#exportEvents{display:none!important}
+.stats,.hero,.row,.panel:not(#patternPanel),footer{display:none!important}
+#openGame{font-size:13px;padding:9px 12px}
+#planeState,.plane{display:none!important}
+@media(max-width:600px){header{padding:12px}h1{font-size:16px}main{padding:12px}#patternPanel{min-height:62vh;border-radius:18px}}
 </style>
 </head>
 <body>
-<header><div><h1>✈ CRASH FLIGHT</h1><small>STANDALONE DESKTOP MONITOR</small></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button id="exportEvents" style="background:#6d91c4;color:#07111e">تصدير سجل الرسائل</button><button id="openGame">فتح نافذة اللعبة</button></div></header>
+<header><h1>✈ CRASH FLIGHT</h1><button id="openGame">فتح اللعبة</button><button id="exportEvents">تصدير</button></header>
 <main>
-<section class="hero"><div><h2>مراقبة الرحلة المباشرة · تتبع حي وتحليل إحصائي</h2><p>البرنامج يراقب أحداث WebSocket داخل نافذة اللعبة المدمجة، ويسجل أحداث بداية الجولة والانفجار عند وصولها.</p><div id="planeState">الطيارة على أرض المطار · في انتظار الجولة</div></div><div class="plane">✈️</div></section>
+<section id="patternPanel" class="panel">
+<h2>نمط الجولة</h2>
+<div id="proximity">في انتظار بيانات الجولة</div>
+<p id="proximityMeta">يتم عرض حالة النمط التجريبي فقط. لا يمكن اعتبارها توقعًا لنتيجة الجولة.</p>
+<p id="connectionStatus">حالة الربط: لم يتم فتح نافذة اللعبة</p>
+</section>
+<div class="hero"><div id="planeState">—</div><div class="plane">✈</div></div>
 <section class="stats">
-<div class="stat"><span>اتصالات WebSocket</span><strong id="connections">0</strong></div>
-<div class="stat"><span>إطارات مستلمة</span><strong id="frames">0</strong></div>
-<div class="stat"><span>أحداث SignalR</span><strong id="events">0</strong></div>
-<div class="stat"><span>جولات مسجلة</span><strong id="saved">0</strong></div>
-</section>
-<section class="row" style="margin:16px 0">
-<div class="panel"><h3>ملخص المضاعفات التاريخية</h3><div id="nextEstimate" style="font-size:42px;color:#f5d77e;font-weight:800">—</div><p id="estimateMeta" class="muted">في انتظار تسجيل 5 جولات على الأقل</p><small>وسيط آخر 30 جولة مكتملة؛ وصف تاريخي وليس توقعًا للجولة القادمة.</small></div>
-<div class="panel"><h3>إشارة مرحلة تجريبية</h3><div id="proximity" style="font-size:22px;color:#91a4bd;font-weight:700">لا توجد علامة مبكرة مثبتة</div><p id="proximityMeta" class="warning">لا تظهر إلا إذا تكرر توقيت مرحلة في 5 جولات مكتملة على الأقل وباتساق 80% أو أكثر.</p></div>
-</section>
-<section class="panel" style="margin:16px 0;border-color:#80652e">
-<h3>محلل رسائل اللعبة وتوقيتها</h3>
-<p class="warning">يسجل المحلل أسماء أحداث SignalR المعروفة ووقت وصولها والفاصل بين الرسائل وعمر الجولة وقت الاستلام. لا يصدر إنذارًا تنبؤيًا قبل إثبات وجود نمط مبكر متكرر.</p>
-<div class="muted">الرسائل المعروضة: <strong id="messageCount">0</strong> · الأرشيف محفوظ محليًا ويحتوي أسماء الأحداث وتوقيتها ورقم الجولة ومرحلتها فقط؛ لا يحتوي محتوى الرسائل أو بيانات الحساب.</div>
-<div style="overflow-x:auto;margin-top:12px"><table><thead><tr><th>الحدث</th><th>رقم الجولة</th><th>الفاصل عن السابق</th><th>من بداية الجولة</th><th>وقت الاستلام</th></tr></thead><tbody id="messageLog"><tr><td colspan="5" class="muted">في انتظار رسائل SignalR معروفة…</td></tr></tbody></table></div>
-</section>
-<section class="row">
-<div class="panel"><h3>حالة الجولة الحالية</h3><p id="roundState" class="status">في انتظار بيانات اللعبة…</p><p id="roundTimer" class="muted">زمن الجولة: —</p><p id="lastEvent" class="muted">آخر حدث: لا يوجد</p><p id="lastActivity" class="muted">آخر نشاط: —</p><p id="connectionStatus" class="warning">حالة الربط: لم يتم فتح نافذة اللعبة</p></div>
-<div class="panel"><h3>مؤشر الرحلة</h3><p class="warning">لا يوجد إنذار تنبؤي مفعّل حاليًا. الأرشيف الجديد سيجمع تسلسل الرسائل وتوقيتها عبر الجولات حتى نختبر أي علامة محتملة على جولات منفصلة، ونحسب زمن التقدم والإنذارات الخاطئة قبل تفعيلها.</p></div>
-</section>
-<section class="panel" style="margin-top:16px"><h3>سجل الانفجارات المستلمة</h3><table><thead><tr><th>رقم الجولة</th><th>المضاعف المعلن</th><th>وقت الاستلام</th></tr></thead><tbody id="rounds"><tr><td colspan="3" class="muted">لا توجد جولات مسجلة بعد</td></tr></tbody></table></section>
+<div class="stat"><span>اتصالات</span><strong id="connections">0</strong></div><div class="stat"><span>Frames</span><strong id="frames">0</strong></div><div class="stat"><span>Events</span><strong id="events">0</strong></div><div class="stat"><span>Rounds</span><strong id="saved">0</strong></div></section>
+<section class="row"><div class="panel"><h3>Historical</h3><div id="nextEstimate">—</div><p id="estimateMeta">—</p></div></section>
+<section class="panel"><p id="messageCount">0</p><table><tbody id="messageLog"></tbody></table></section>
+<section class="row"><div class="panel"><p id="roundState">—</p><p id="roundTimer">—</p><p id="lastEvent">—</p><p id="lastActivity">—</p></div><div class="panel"></div></section>
+<section class="panel"><table><tbody id="rounds"></tbody></table></section>
 </main>
-<footer>الخصوصية: يحفظ البرنامج محليًا بيانات وصفية لأحداث SignalR: اسم الحدث والتوقيت ورقم الجولة ورمز المرحلة فقط. لا يحفظ إطارات الشبكة الخام أو كلمات المرور أو Cookies أو Tokens. تسجيل الأحداث لا يعني التنبؤ بالنتيجة.</footer>
+<footer>—</footer>
 <script src="renderer.js"></script>
-</body></html>
+</body>
+</html>
