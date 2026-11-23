@@ -12,7 +12,7 @@
     "appId": "com.amirslama.crashflight",
     "productName": "CRASH FLIGHT",
     "directories": { "output": "dist" },
-    "files": ["main.js", "preload.js", "index.html", "renderer.js", "signalr-parser.js", "package.json"],
+    "files": ["main.js", "preload.js", "index.html", "renderer.js", "signalr-parser.js", "signal-analysis.js", "package.json"],
     "win": { "target": ["portable"] }
   },
   "devDependencies": {
