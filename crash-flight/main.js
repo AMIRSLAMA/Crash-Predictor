@@ -3,6 +3,7 @@ const path = require('node:path');
 const fs = require('node:fs');
 const { dialog } = require('electron');
 const { parseSignalRFrame } = require('./signalr-parser');
+const { analyzeStageSignals, median } = require('./signal-analysis');
 
 let dashboard = null;
 let gameWindow = null;
@@ -32,42 +33,15 @@ const state = {
   }
 };
 
-function median(values) {
-  const sorted = values.filter(Number.isFinite).slice().sort((a,b)=>a-b);
-  if (!sorted.length) return null;
-  const mid = Math.floor(sorted.length / 2);
-  return sorted.length % 2 ? sorted[mid] : (sorted[mid-1] + sorted[mid]) / 2;
-}
 function getInsights() {
   const completed = state.rounds.filter(r => r.multiplier != null && r.multiplier !== '' && Number.isFinite(Number(r.multiplier)));
   const recent = completed.slice(-30).map(r => Number(r.multiplier));
-  const estimate = recent.length >= 5 ? median(recent) : null;
-  const byRound = new Map();
-  for (const e of eventArchive) {
-    if (!e.roundId) continue;
-    if (!byRound.has(String(e.roundId))) byRound.set(String(e.roundId), []);
-    byRound.get(String(e.roundId)).push(e);
-  }
-  const stageLeads = new Map();
-  for (const [id, events] of byRound) {
-    const crash = events.find(e => e.target === 'OnCrash' || e.target === 'OnResult');
-    if (!crash || !Number.isFinite(crash.receivedAtMs)) continue;
-    const stages = events.filter(e => e.target === 'OnStage' && Number.isFinite(e.stage) && Number.isFinite(e.receivedAtMs) && e.receivedAtMs < crash.receivedAtMs);
-    const last = stages.at(-1);
-    if (!last) continue;
-    const lead = (crash.receivedAtMs - last.receivedAtMs) / 1000;
-    if (!stageLeads.has(last.stage)) stageLeads.set(last.stage, []);
-    stageLeads.get(last.stage).push(lead);
-  }
-  const candidates = [...stageLeads.entries()].map(([stage, leads]) => ({stage, leads, count:leads.length, med:median(leads)})).filter(x=>x.count>=5 && x.med!==null && x.med<=5);
-  candidates.sort((a,b)=>b.count-a.count);
-  const candidate = candidates[0] || null;
+  const analysis = analyzeStageSignals(eventArchive, state.currentRound);
   return {
-    estimate, sampleSize: recent.length,
-    alert: state.currentRound?.status === 'جارية' && candidate && Number.isFinite(state.currentRound.lastStage) && state.currentRound.lastStage === candidate.stage
-      ? {level:'candidate', stage:candidate.stage, samples:candidate.count, leadSeconds:Number(candidate.med.toFixed(1))}
-      : null,
-    candidate: candidate ? {stage:candidate.stage, samples:candidate.count, leadSeconds:Number(candidate.med.toFixed(1))} : null
+    // Historical median only; deliberately not labelled as a next-round prediction.
+    historicalMedian: recent.length >= 5 ? median(recent) : null,
+    sampleSize: recent.length,
+    ...analysis
   };
 }
 

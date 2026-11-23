@@ -19,6 +19,7 @@ motionStyle.textContent = `
 }`;
 document.head.appendChild(motionStyle);
 let lastCrashKey = null;
+let activeRoundForTimer = null;
 function render(state) {
   const s = state.stats || {};
   el('connections').textContent = s.wsConnections ?? 0;
@@ -32,22 +33,23 @@ function render(state) {
 
   const insight = state.insights || {};
   const estimateNode = el('nextEstimate');
-  if (estimateNode) estimateNode.textContent = insight.estimate == null ? '—' : Number(insight.estimate).toFixed(2) + 'x';
+  if (estimateNode) estimateNode.textContent = insight.historicalMedian == null ? '—' : Number(insight.historicalMedian).toFixed(2) + 'x';
   const estimateMeta = el('estimateMeta');
   if (estimateMeta) estimateMeta.textContent = insight.sampleSize >= 5 ? 'مبني على ' + insight.sampleSize + ' جولة حديثة · وسيط المضاعفات' : 'نحتاج ' + Math.max(0,5-(insight.sampleSize||0)) + ' جولات إضافية على الأقل';
   const proximity = el('proximity'), proximityMeta = el('proximityMeta');
   if (proximity) {
     if (insight.alert) {
-      proximity.textContent = 'علامة مرحلة متكررة · ليست تأكيدًا';
+      proximity.textContent = 'إشارة تجريبية · ليست توقعًا مؤكدًا';
       proximity.style.color = '#f0c66c';
-      if (proximityMeta) proximityMeta.textContent = 'المرحلة ' + insight.alert.stage + ' ظهرت في ' + insight.alert.samples + ' جولات سابقة؛ وسيط الزمن حتى الانفجار ' + insight.alert.leadSeconds + ' ثانية. النمط تاريخي وقد لا يتكرر.';
+      if (proximityMeta) proximityMeta.textContent = 'المرحلة ' + insight.alert.stage + ' ظهرت في ' + insight.alert.samples + ' جولات؛ اتساق ' + insight.alert.precision + '%؛ وسيط الفاصل حتى الانفجار ' + insight.alert.leadSeconds + ' ثانية. اختبرها ولا تعتمد عليها للمراهنة.';
     } else {
       proximity.textContent = state.currentRound?.status === 'جارية' ? 'لا توجد علامة مبكرة مطابقة الآن' : 'في انتظار جولة جارية';
       proximity.style.color = '#91a4bd';
-      if (proximityMeta) proximityMeta.textContent = insight.candidate ? 'النمط المرشح: مرحلة ' + insight.candidate.stage + ' من ' + insight.candidate.samples + ' جولات؛ لم تظهر المطابقة في المرحلة الحالية.' : 'لا يوجد حتى الآن نمط مرحلة متكرر كافٍ لإظهار تحذير.';
+      if (proximityMeta) proximityMeta.textContent = insight.candidate ? 'النمط المرشح: مرحلة ' + insight.candidate.stage + ' من ' + insight.candidate.samples + ' جولات؛ اتساق ' + insight.candidate.precision + '%؛ لم تظهر المطابقة الآن.' : 'لا يوجد حتى الآن نمط متكرر ومتسق كفاية لإظهار إشارة.';
     }
   }
   const current = state.currentRound;
+  activeRoundForTimer = current;
   const messageLog = state.messageLog || [];
   const logNode = el('messageLog');
   if (logNode) {
@@ -98,3 +100,15 @@ window.flight.getState().then(render).catch(err => {
   el('roundState').textContent = 'تعذر قراءة حالة البرنامج: ' + err.message;
 });
 window.flight.onState(render);
+
+setInterval(() => {
+  const node = el('roundTimer');
+  if (!node) return;
+  if (!activeRoundForTimer || activeRoundForTimer.status !== 'جارية' || !activeRoundForTimer.startedAt) {
+    node.textContent = 'زمن الجولة: —';
+    return;
+  }
+  const elapsed = Math.max(0, Date.now() - Date.parse(activeRoundForTimer.startedAt));
+  const seconds = elapsed / 1000;
+  node.textContent = 'زمن الجولة: ' + seconds.toFixed(1) + ' ثانية';
+}, 200);
