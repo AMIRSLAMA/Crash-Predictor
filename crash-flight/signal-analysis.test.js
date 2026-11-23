@@ -24,7 +24,7 @@ test('requires repeated, consistent 1–5 second stage timing', () => {
 });
 
 test('does not promote inconsistent timing to an alert', () => {
-  const events = makeRounds([3, 3, 3, 3, 18]);
+  const events = makeRounds([3, 3, 3, 18, 18]);
   const result = analyzeStageSignals(events, { status: 'جارية', lastStage: 7 });
   assert.equal(result.candidate, null);
   assert.equal(result.alert, null);
